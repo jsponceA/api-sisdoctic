@@ -152,6 +152,33 @@ class DatabaseSeeder extends Seeder
                 ]
             ],
             [
+                "group_name" => "Proyectos",
+                "permisos" => [
+                    "proyectos-listado",
+                    "proyectos-visualizar",
+                    "proyectos-crear",
+                    "proyectos-modificar",
+                    "proyectos-eliminar",
+                    "proyectos-habilitar",
+                    "proyectos-deshabilitar",
+                    "proyectos-reportes",
+                ]
+            ],
+
+            [
+                "group_name" => "Registro de Recepciones",
+                "permisos" => [
+                    "registro-recepciones-listado",
+                    "registro-recepciones-visualizar",
+                    "registro-recepciones-crear",
+                    "registro-recepciones-modificar",
+                    "registro-recepciones-eliminar",
+                    "registro-recepciones-habilitar",
+                    "registro-recepciones-deshabilitar",
+                    "registro-recepciones-reportes",
+                ]
+            ],
+            [
                 "group_name" => "Empresa",
                 "permisos" => ["empresa-modificar"]
             ]
