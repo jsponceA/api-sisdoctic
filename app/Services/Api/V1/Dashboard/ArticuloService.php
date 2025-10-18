@@ -13,7 +13,7 @@ class ArticuloService
     public function queryListado(array $params = [])
     {
         $request = collect($params);
-        $search = str($request->get("search"))->lower();
+        $search = str($request->get("search"))->lower()->toString();
         $tipoMaterialId = $request->get("tipo_material_id");
         $denominacionId = $request->get("denominacion_id");
         $estadoConservacionId = $request->get("estado_conservacion_id");

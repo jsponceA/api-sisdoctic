@@ -20,6 +20,7 @@ class ResponsableRequest extends FormRequest
                     "nombres" => ["required","string","max:150"],
                     "apellidos" => ["required","string","max:150"],
                     "correo" => ["nullable","email","max:150"],
+                    "telefono" => ["nullable","max:50"],
                     "tipo_documento" => ["nullable","string","max:50"],
                     "numero_documento" => ["nullable","string","max:50",new UniqueColumn("responsables","numero_documento",null,true)],
                 ];
@@ -28,6 +29,7 @@ class ResponsableRequest extends FormRequest
                     "nombres" => ["required","string","max:150"],
                     "apellidos" => ["required","string","max:150"],
                     "correo" => ["nullable","email","max:150"],
+                    "telefono" => ["nullable","max:50"],
                     "tipo_documento" => ["nullable","string","max:50"],
                     "numero_documento" => ["nullable","string","max:50",new UniqueColumn("responsables","numero_documento",$this->route()->parameter("responsable"),true)],
                 ];

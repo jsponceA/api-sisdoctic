@@ -19,33 +19,12 @@ class Proyecto extends Model
         "creado_por_usuario_id",
         "modificado_por_usuario_id",
         "eliminado_por_usuario_id",
-        "categoria_id",
-        "responsable_id",
-        // I. DATOS DE IDENTIFICACIÓN
+        // INFORMACIÓN BÁSICA DEL PROYECTO
         "codigo_proyecto",
-        "nombre_proyecto",
+        "nombre",
         "fecha_inicio",
         "fecha_fin",
-        "ubicacion",
-        "estado",
         "descripcion",
-        // II. DATOS TÉCNICOS
-        "presupuesto",
-        "fuente_financiamiento",
-        "objetivos",
-        "alcance",
-        "numero_beneficiarios",
-        // III. EQUIPO Y RECURSOS
-        "equipo_trabajo",
-        "recursos_materiales",
-        "recursos_tecnologicos",
-        // IV. SEGUIMIENTO
-        "porcentaje_avance",
-        "resultados_obtenidos",
-        "dificultades_encontradas",
-        "lecciones_aprendidas",
-        "observaciones",
-        "recomendaciones",
     ];
 
     protected $appends = [
@@ -55,21 +34,15 @@ class Proyecto extends Model
         "fecha_fin_format",
     ];
 
-    // Relaciones principales
-    public function categoria(): BelongsTo
+    // Relaciones con tablas relacionadas
+    public function responsables(): HasMany
     {
-        return $this->belongsTo(Categoria::class, "categoria_id", "id");
+        return $this->hasMany(ProyectoResponsable::class, "proyecto_id", "id");
     }
 
-    public function responsable(): BelongsTo
+    public function tiposDocumento(): HasMany
     {
-        return $this->belongsTo(Responsable::class, "responsable_id", "id");
-    }
-
-    // Relaciones de tablas relacionadas
-    public function actividades(): HasMany
-    {
-        return $this->hasMany(ProyectoActividad::class, "proyecto_id", "id");
+        return $this->hasMany(ProyectoTipoDocumento::class, "proyecto_id", "id");
     }
 
     public function documentos(): HasMany
@@ -77,7 +50,7 @@ class Proyecto extends Model
         return $this->hasMany(ProyectoDocumento::class, "proyecto_id", "id");
     }
 
-    public function imagenes(): HasMany
+    public function fotografias(): HasMany
     {
         return $this->hasMany(ProyectoImagen::class, "proyecto_id", "id");
     }
@@ -135,4 +108,3 @@ class Proyecto extends Model
         );
     }
 }
-

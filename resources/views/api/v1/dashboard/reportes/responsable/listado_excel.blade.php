@@ -10,6 +10,7 @@
         <th style="background-color: #2c61ed; color: white; font-weight: bold;">Nombres</th>
         <th style="background-color: #2c61ed; color: white; font-weight: bold;">Apellidos</th>
         <th style="background-color: #2c61ed; color: white; font-weight: bold;">Correo</th>
+        <th style="background-color: #2c61ed; color: white; font-weight: bold;">Teléfono</th>
         <th style="background-color: #2c61ed; color: white; font-weight: bold;">Tipo Documento</th>
         <th style="background-color: #2c61ed; color: white; font-weight: bold;">Número Documento</th>
     </tr>
@@ -20,6 +21,7 @@
             <td style="border: 1px solid #000;">{{ $r->nombres }}</td>
             <td style="border: 1px solid #000;">{{ $r->apellidos }}</td>
             <td style="border: 1px solid #000;">{{ $r->correo ?? 'N/A' }}</td>
+            <td style="border: 1px solid #000;">{{ $r->telefono ?? 'N/A' }}</td>
             <td style="border: 1px solid #000;">{{ $r->tipo_documento ?? 'N/A' }}</td>
             <td style="border: 1px solid #000;">{{ $r->numero_documento ?? 'N/A' }}</td>
         </tr>

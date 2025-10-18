@@ -4,7 +4,7 @@ namespace App\Services\Api\V1\Dashboard;
 
 use App\Models\RegistroRecepcion;
 use App\Models\RegistroRecepcionDocumento;
-use App\Models\RegistroRecepcionImagen;
+use App\Models\RegistroRecepcionDocumentoRespuesta;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,11 +14,12 @@ class RegistroRecepcionService
     public function queryListado(array $params = [])
     {
         $request = collect($params);
-        $search = str($request->get("search"))->lower();
+        $search = str($request->get("search"))->lower()->toString();
         $proyectoId = $request->get("proyecto_id");
-        $responsableId = $request->get("responsable_id");
-        $tipoRecepcion = $request->get("tipo_recepcion");
-        $estadoProceso = $request->get("estado_proceso");
+        $tipoDocumentoId = $request->get("tipo_documento_id");
+        $especialidadId = $request->get("especialidad_id");
+        $situacion = $request->get("situacion");
+        $prioridad = $request->get("prioridad");
         $fechaDesde = $request->get("fecha_desde");
         $fechaHasta = $request->get("fecha_hasta");
         $perPage = $request->get("per_page", 15);
@@ -29,19 +30,19 @@ class RegistroRecepcionService
         return RegistroRecepcion::query()
             ->with([
                 "creadoPor", "modificadoPor", "eliminadoPor",
-                "proyecto", "responsable", "tipoMaterial",
-                "documentos", "imagenes"
+                "proyecto", "tipoDocumento", "tipoDocumentoClasificacion", "especialidad",
+                "documentosAdjuntos", "documentosRespuesta"
             ])
             ->when(!empty($search), fn($q) => $q->where(function ($query) use ($search) {
-                $query->where(DB::raw("LOWER(numero_recepcion)"), "LIKE", "%{$search}%")
-                    ->orWhere(DB::raw("LOWER(remitente)"), "LIKE", "%{$search}%")
-                    ->orWhere(DB::raw("LOWER(procedencia)"), "LIKE", "%{$search}%")
-                    ->orWhere(DB::raw("LOWER(descripcion_material)"), "LIKE", "%{$search}%");
+                $query->where(DB::raw("LOWER(num_doc_recep)"), "LIKE", "%{$search}%")
+                    ->orWhere(DB::raw("LOWER(asunto)"), "LIKE", "%{$search}%")
+                    ->orWhere(DB::raw("LOWER(destino)"), "LIKE", "%{$search}%");
             }))
             ->when(!empty($proyectoId), fn($q) => $q->where("proyecto_id", $proyectoId))
-            ->when(!empty($responsableId), fn($q) => $q->where("responsable_id", $responsableId))
-            ->when(!empty($tipoRecepcion), fn($q) => $q->where("tipo_recepcion", $tipoRecepcion))
-            ->when(!empty($estadoProceso), fn($q) => $q->where("estado_proceso", $estadoProceso))
+            ->when(!empty($tipoDocumentoId), fn($q) => $q->where("tipo_documento_id", $tipoDocumentoId))
+            ->when(!empty($especialidadId), fn($q) => $q->where("especialidad_id", $especialidadId))
+            ->when(!empty($situacion), fn($q) => $q->where("situacion", $situacion))
+            ->when(!empty($prioridad), fn($q) => $q->where("prioridad", $prioridad))
             ->when(!empty($fechaDesde), fn($q) => $q->whereDate("fecha_recepcion", ">=", $fechaDesde))
             ->when(!empty($fechaHasta), fn($q) => $q->whereDate("fecha_recepcion", "<=", $fechaHasta))
             ->orderBy("id", "DESC")
@@ -53,27 +54,24 @@ class RegistroRecepcionService
     {
         $data = collect($data);
         $registro = new RegistroRecepcion();
-        $registro->fill($data->except("documentos", "imagenes")->toArray());
-        $registro->numero_recepcion = $this->generarNumeroRecepcion();
+        $registro->fill($data->except("documentos_adjuntos", "documentos_respuesta")->toArray());
         $registro->save();
 
-        // Guardar documentos
-        foreach ($data->get("documentos", []) ?? [] as $documento) {
+        // Guardar documentos adjuntos
+        foreach ($data->get("documentos_adjuntos", []) ?? [] as $archivo) {
             RegistroRecepcionDocumento::query()->create([
                 "registro_recepcion_id" => $registro->id,
-                "archivo" => $documento['archivo'] ?? null,
-                "nombre_documento" => $documento['nombre_documento'] ?? null,
-                "tipo_documento" => $documento['tipo_documento'] ?? null,
+                "archivo" => $archivo,
+                "nombre_original" => basename($archivo),
             ]);
         }
 
-        // Guardar imágenes
-        foreach ($data->get("imagenes", []) ?? [] as $imagen) {
-            RegistroRecepcionImagen::query()->create([
+        // Guardar documentos de respuesta
+        foreach ($data->get("documentos_respuesta", []) ?? [] as $archivo) {
+            RegistroRecepcionDocumentoRespuesta::query()->create([
                 "registro_recepcion_id" => $registro->id,
-                "foto" => $imagen['foto'] ?? null,
-                "descripcion_foto" => $imagen['descripcion_foto'] ?? null,
-                "tipo_foto" => $imagen['tipo_foto'] ?? null,
+                "archivo" => $archivo,
+                "nombre_original" => basename($archivo),
             ]);
         }
 
@@ -84,8 +82,8 @@ class RegistroRecepcionService
     {
         return RegistroRecepcion::query()
             ->with([
-                "proyecto", "responsable", "tipoMaterial",
-                "documentos", "imagenes",
+                "proyecto", "tipoDocumento", "tipoDocumentoClasificacion", "especialidad",
+                "documentosAdjuntos", "documentosRespuesta",
                 "creadoPor", "modificadoPor", "eliminadoPor"
             ])
             ->findOrFail($id);
@@ -96,33 +94,26 @@ class RegistroRecepcionService
         $data = collect($data);
         $registro = RegistroRecepcion::query()->findOrFail($id);
 
-        $registro->fill($data->except("numero_recepcion", "documentos", "imagenes")->toArray());
+        $registro->fill($data->except("documentos_adjuntos", "documentos_respuesta")->toArray());
         $registro->update();
 
-        // Guardar nuevos documentos (no eliminamos los anteriores, solo agregamos)
-        foreach ($data->get("documentos", []) ?? [] as $documento) {
-            if (!empty($documento['archivo'])) {
-                RegistroRecepcionDocumento::query()->create([
-                    "registro_recepcion_id" => $registro->id,
-                    "archivo" => $documento['archivo'],
-                    "nombre_documento" => $documento['nombre_documento'] ?? null,
-                    "tipo_documento" => $documento['tipo_documento'] ?? null,
-                ]);
-            }
+        // Guardar nuevos documentos adjuntos
+        foreach ($data->get("documentos_adjuntos", []) ?? [] as $archivo) {
+            RegistroRecepcionDocumento::query()->create([
+                "registro_recepcion_id" => $registro->id,
+                "archivo" => $archivo,
+                "nombre_original" => basename($archivo),
+            ]);
         }
 
-        // Guardar nuevas imágenes
-        foreach ($data->get("imagenes", []) ?? [] as $imagen) {
-            if (!empty($imagen['foto'])) {
-                RegistroRecepcionImagen::query()->create([
-                    "registro_recepcion_id" => $registro->id,
-                    "foto" => $imagen['foto'],
-                    "descripcion_foto" => $imagen['descripcion_foto'] ?? null,
-                    "tipo_foto" => $imagen['tipo_foto'] ?? null,
-                ]);
-            }
+        // Guardar nuevos documentos de respuesta
+        foreach ($data->get("documentos_respuesta", []) ?? [] as $archivo) {
+            RegistroRecepcionDocumentoRespuesta::query()->create([
+                "registro_recepcion_id" => $registro->id,
+                "archivo" => $archivo,
+                "nombre_original" => basename($archivo),
+            ]);
         }
-
         return $registro;
     }
 
@@ -130,7 +121,7 @@ class RegistroRecepcionService
     {
         $registro = RegistroRecepcion::query()->findOrFail($id);
 
-        // Eliminar todos los documentos
+        // Eliminar todos los documentos adjuntos
         $documentos = RegistroRecepcionDocumento::query()->where("registro_recepcion_id", $registro->id)->get();
         foreach ($documentos as $documento) {
             if (!empty($documento->archivo)) {
@@ -139,19 +130,18 @@ class RegistroRecepcionService
             $documento->delete();
         }
 
-        // Eliminar todas las imágenes
-        $imagenes = RegistroRecepcionImagen::query()->where("registro_recepcion_id", $registro->id)->get();
-        foreach ($imagenes as $imagen) {
-            if (!empty($imagen->foto)) {
-                Storage::delete("dashboard/registro-recepciones/{$imagen->foto}");
+        // Eliminar todos los documentos de respuesta
+        $documentosRespuesta = RegistroRecepcionDocumentoRespuesta::query()->where("registro_recepcion_id", $registro->id)->get();
+        foreach ($documentosRespuesta as $documento) {
+            if (!empty($documento->archivo)) {
+                Storage::delete("dashboard/registro-recepciones/{$documento->archivo}");
             }
-            $imagen->delete();
+            $documento->delete();
         }
 
         $registro->eliminado_por_usuario_id = $userId;
         $registro->update();
         $registro->delete();
-
         return $registro;
     }
 
@@ -173,14 +163,22 @@ class RegistroRecepcionService
         return true;
     }
 
-    public function eliminarImagen(int|string $imagenId)
+    public function eliminarDocumentoRespuesta(int|string $documentoId)
     {
-        $imagen = RegistroRecepcionImagen::query()->findOrFail($imagenId);
-        if (!empty($imagen->foto)) {
-            Storage::delete("dashboard/registro-recepciones/{$imagen->foto}");
+        $documento = RegistroRecepcionDocumentoRespuesta::query()->findOrFail($documentoId);
+        if (!empty($documento->archivo)) {
+            Storage::delete("dashboard/registro-recepciones/{$documento->archivo}");
         }
-        $imagen->delete();
+        $documento->delete();
         return true;
+    }
+
+    public function  modificarEstadoRespuesta(int|string $documentoId, string $estado)
+    {
+        $registro = RegistroRecepcion::query()->findOrFail($documentoId);
+        $registro->estado_documento = $estado;
+        $registro->update();
+        return $registro;
     }
 }
 

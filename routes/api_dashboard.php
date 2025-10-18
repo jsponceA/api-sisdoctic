@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Dashboard\AreaController;
 use App\Http\Controllers\Api\V1\Dashboard\ArticuloController;
 use App\Http\Controllers\Api\V1\Dashboard\AuthController;
 use App\Http\Controllers\Api\V1\Dashboard\CategoriaController;
 use App\Http\Controllers\Api\V1\Dashboard\ConfiguracionEmpresaController;
 use App\Http\Controllers\Api\V1\Dashboard\DenominacionController;
+use App\Http\Controllers\Api\V1\Dashboard\EspecialidadController;
 use App\Http\Controllers\Api\V1\Dashboard\EstadisticaController;
 use App\Http\Controllers\Api\V1\Dashboard\EstadoConservacionController;
 use App\Http\Controllers\Api\V1\Dashboard\IntervencionController;
@@ -16,6 +18,8 @@ use App\Http\Controllers\Api\V1\Dashboard\RegistroRecepcionController;
 use App\Http\Controllers\Api\V1\Dashboard\ResponsableController;
 use App\Http\Controllers\Api\V1\Dashboard\RolController;
 use App\Http\Controllers\Api\V1\Dashboard\SalaController;
+use App\Http\Controllers\Api\V1\Dashboard\TipoDocumentoClasificacionController;
+use App\Http\Controllers\Api\V1\Dashboard\TipoDocumentoController;
 use App\Http\Controllers\Api\V1\Dashboard\TipoMaterialController;
 use App\Http\Controllers\Api\V1\Dashboard\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -139,11 +143,32 @@ Route::group(["prefix" => "v1/dashboard","as" => "api.v1.dashboard."], function 
 
         /* RUTAS MODULO REGISTRO DE RECEPCIONES*/
         Route::get("registro-recepciones/generar-codigo-recepcion", [RegistroRecepcionController::class,"generarCodigoRecepcion"]);
+        Route::patch("registro-recepciones/modificar-estado-respuesta/{id}", [RegistroRecepcionController::class,"modificarEstadoRespuesta"]);
         Route::post("registro-recepciones/ficha-recepcion-pdf/{id}", [RegistroRecepcionController::class,"fichaRecepcionPdf"]);
         Route::post("registro-recepciones/reporte-pdf", [RegistroRecepcionController::class,"reportePdf"]);
         Route::post("registro-recepciones/reporte-excel", [RegistroRecepcionController::class,"reporteExcel"]);
         Route::delete("registro-recepciones/eliminar-documento/{documentoId}", [RegistroRecepcionController::class,"eliminarDocumento"]);
-        Route::delete("registro-recepciones/eliminar-imagen/{imagenId}", [RegistroRecepcionController::class,"eliminarImagen"]);
+        Route::delete("registro-recepciones/eliminar-documento-respuesta/{documentoId}", [RegistroRecepcionController::class,"eliminarDocumentoRespuesta"]);
         Route::apiResource("registro-recepciones", RegistroRecepcionController::class);
+
+        /* RUTAS MODULO AREAS*/
+        Route::post("areas/reporte-pdf", [AreaController::class,"reportePdf"]);
+        Route::post("areas/reporte-excel", [AreaController::class,"reporteExcel"]);
+        Route::apiResource("areas", AreaController::class);
+
+        /* RUTAS MODULO ESPECIALIDADES*/
+        Route::post("especialidades/reporte-pdf", [EspecialidadController::class,"reportePdf"]);
+        Route::post("especialidades/reporte-excel", [EspecialidadController::class,"reporteExcel"]);
+        Route::apiResource("especialidades", EspecialidadController::class);
+
+        /* RUTAS MODULO TIPOS DE DOCUMENTO*/
+        Route::post("tipos-documento/reporte-pdf", [TipoDocumentoController::class,"reportePdf"]);
+        Route::post("tipos-documento/reporte-excel", [TipoDocumentoController::class,"reporteExcel"]);
+        Route::apiResource("tipos-documento", TipoDocumentoController::class);
+
+        /* RUTAS MODULO CLASIFICACION DE DOCUMENTOS*/
+        Route::post("tipos-documento-clasificacion/reporte-pdf", [TipoDocumentoClasificacionController::class,"reportePdf"]);
+        Route::post("tipos-documento-clasificacion/reporte-excel", [TipoDocumentoClasificacionController::class,"reporteExcel"]);
+        Route::apiResource("tipos-documento-clasificacion", TipoDocumentoClasificacionController::class);
     });
 });

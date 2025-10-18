@@ -78,27 +78,25 @@
     </style>
 </head>
 <body>
-<header>
+{{--<header>
     <img src="{{public_path('img/logo_mincul.jpg')}}" style="width: 377px;height: 45px">
     <img src="{{public_path('img/logo_puruchuco.png')}}" style="width: 111px;height: 60px;float: right">
-</header>
+</header>--}}
 
 <div class="titulo-principal">FICHA DE PROYECTO</div>
 
-<!-- I. DATOS DE IDENTIFICACIÓN -->
+<!-- I. INFORMACIÓN BÁSICA DEL PROYECTO -->
 <table>
     <tr>
-        <td colspan="4" class="section-header">I. DATOS DE IDENTIFICACIÓN</td>
+        <td colspan="4" class="section-header">I. INFORMACIÓN BÁSICA DEL PROYECTO</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">Código de Proyecto:</td>
-        <td class="content-cell">{{ $proyecto->codigo_proyecto }}</td>
-        <td class="label-cell">Estado:</td>
-        <td class="content-cell">{{ $proyecto->estado }}</td>
+        <td colspan="3" class="content-cell">{{ $proyecto->codigo_proyecto }}</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">Nombre del Proyecto:</td>
-        <td colspan="3" class="content-cell">{{ $proyecto->nombre_proyecto }}</td>
+        <td colspan="3" class="content-cell">{{ $proyecto->nombre }}</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">Fecha de Inicio:</td>
@@ -107,138 +105,94 @@
         <td class="content-cell">{{ $proyecto->fecha_fin_format }}</td>
     </tr>
     <tr class="info-row">
-        <td class="label-cell">Ubicación:</td>
-        <td class="content-cell">{{ $proyecto->ubicacion }}</td>
-        <td class="label-cell">Categoría:</td>
-        <td class="content-cell">{{ $proyecto->categoria?->nombre }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Responsable:</td>
-        <td colspan="3" class="content-cell">{{ $proyecto->responsable?->nombre_completo }}</td>
-    </tr>
-    <tr class="info-row">
         <td class="label-cell">Descripción:</td>
         <td colspan="3" class="content-cell text-area">{{ $proyecto->descripcion }}</td>
     </tr>
 </table>
 
-<!-- II. DATOS TÉCNICOS -->
+<!-- II. RESPONSABLES DEL PROYECTO -->
+@if($proyecto->responsables && $proyecto->responsables->count() > 0)
 <table>
     <tr>
-        <td colspan="4" class="section-header">II. DATOS TÉCNICOS</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Presupuesto:</td>
-        <td class="content-cell">{{ $proyecto->presupuesto ? 'S/ ' . number_format($proyecto->presupuesto, 2) : '-' }}</td>
-        <td class="label-cell">N° Beneficiarios:</td>
-        <td class="content-cell">{{ $proyecto->numero_beneficiarios }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Fuente de Financiamiento:</td>
-        <td colspan="3" class="content-cell">{{ $proyecto->fuente_financiamiento }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Objetivos:</td>
-        <td colspan="3" class="content-cell text-area">{{ $proyecto->objetivos }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Alcance:</td>
-        <td colspan="3" class="content-cell text-area">{{ $proyecto->alcance }}</td>
-    </tr>
-</table>
-
-<!-- III. EQUIPO Y RECURSOS -->
-<table>
-    <tr>
-        <td colspan="2" class="section-header">III. EQUIPO Y RECURSOS</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Equipo de Trabajo:</td>
-        <td class="content-cell text-area">{{ $proyecto->equipo_trabajo }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Recursos Materiales:</td>
-        <td class="content-cell text-area">{{ $proyecto->recursos_materiales }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Recursos Tecnológicos:</td>
-        <td class="content-cell text-area">{{ $proyecto->recursos_tecnologicos }}</td>
-    </tr>
-</table>
-
-<!-- IV. SEGUIMIENTO -->
-<table>
-    <tr>
-        <td colspan="2" class="section-header">IV. SEGUIMIENTO</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Porcentaje de Avance:</td>
-        <td class="content-cell">{{ $proyecto->porcentaje_avance }}%</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Resultados Obtenidos:</td>
-        <td class="content-cell text-area">{{ $proyecto->resultados_obtenidos }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Dificultades Encontradas:</td>
-        <td class="content-cell text-area">{{ $proyecto->dificultades_encontradas }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Lecciones Aprendidas:</td>
-        <td class="content-cell text-area">{{ $proyecto->lecciones_aprendidas }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Observaciones:</td>
-        <td class="content-cell text-area">{{ $proyecto->observaciones }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Recomendaciones:</td>
-        <td class="content-cell text-area">{{ $proyecto->recomendaciones }}</td>
-    </tr>
-</table>
-
-<!-- V. ACTIVIDADES DEL PROYECTO -->
-@if($proyecto->actividades && $proyecto->actividades->count() > 0)
-<table>
-    <tr>
-        <td colspan="5" class="section-header">V. ACTIVIDADES DEL PROYECTO</td>
+        <td colspan="4" class="section-header">II. RESPONSABLES DEL PROYECTO</td>
     </tr>
     <tr>
-        <th style="background-color: #f0f0f0;">Nombre Actividad</th>
-        <th style="background-color: #f0f0f0;">Descripción</th>
-        <th style="background-color: #f0f0f0;">Fecha Programada</th>
         <th style="background-color: #f0f0f0;">Responsable</th>
-        <th style="background-color: #f0f0f0;">Estado</th>
+        <th style="background-color: #f0f0f0;">Teléfono</th>
+        <th style="background-color: #f0f0f0;">Correo</th>
+        <th style="background-color: #f0f0f0;">Especialidad</th>
     </tr>
-    @foreach($proyecto->actividades as $actividad)
+    @foreach($proyecto->responsables as $resp)
     <tr>
-        <td>{{ $actividad->nombre_actividad }}</td>
-        <td>{{ $actividad->descripcion_actividad }}</td>
-        <td>{{ $actividad->fecha_programada ? \Carbon\Carbon::parse($actividad->fecha_programada)->format('d/m/Y') : '-' }}</td>
-        <td>{{ $actividad->responsable_actividad }}</td>
-        <td>{{ $actividad->estado_actividad }}</td>
+        <td>{{ $resp->responsable?->nombre_completo }}</td>
+        <td>{{ $resp->responsable?->telefono ?? '-' }}</td>
+        <td>{{ $resp->responsable?->correo ?? '-' }}</td>
+        <td>{{ $resp->especialidad?->nombre ?? '-' }}</td>
     </tr>
     @endforeach
 </table>
 @endif
 
-<!-- Footer con información de auditoría -->
-<table style="margin-top: 30px;">
+<!-- III. TIPOS DE DOCUMENTO ASOCIADOS -->
+@if($proyecto->tiposDocumento && $proyecto->tiposDocumento->count() > 0)
+<table>
     <tr>
-        <td colspan="2" style="background-color: #f0f0f0; font-weight: bold; text-align: center;">INFORMACIÓN DE AUDITORÍA</td>
+        <td colspan="3" class="section-header">III. TIPOS DE DOCUMENTO ASOCIADOS</td>
     </tr>
     <tr>
-        <td class="label-cell">Creado por:</td>
-        <td>{{ $proyecto->creadoPor?->name }} - {{ $proyecto->fecha_creacion_format }}</td>
+        <th style="background-color: #f0f0f0;">Tipo de Documento</th>
+        <th style="background-color: #f0f0f0;">Días de Plazo</th>
+        <th style="background-color: #f0f0f0;">Penalidad</th>
     </tr>
-    @if($proyecto->modificadoPor)
+    @foreach($proyecto->tiposDocumento as $td)
     <tr>
-        <td class="label-cell">Modificado por:</td>
-        <td>{{ $proyecto->modificadoPor?->name }} - {{ $proyecto->fecha_modificacion_format }}</td>
+        <td>{{ $td->tipoDocumento?->nombre }}</td>
+        <td>{{ $td->dias_plazo ?? '-' }} días</td>
+        <td>{{ $td->penalidad ? 'S/ ' . number_format($td->penalidad, 2) : '-' }}</td>
     </tr>
-    @endif
+    @endforeach
 </table>
+@endif
+
+<!-- IV. DOCUMENTOS ADJUNTOS -->
+@if($proyecto->documentos && $proyecto->documentos->count() > 0)
+<table>
+    <tr>
+        <td colspan="2" class="section-header">IV. DOCUMENTOS ADJUNTOS</td>
+    </tr>
+    <tr>
+        <th style="background-color: #f0f0f0;">#</th>
+        <th style="background-color: #f0f0f0;">Archivo</th>
+    </tr>
+    @foreach($proyecto->documentos as $index => $doc)
+    <tr>
+        <td style="text-align: center;">{{ $index + 1 }}</td>
+        <td>{{ $doc->archivo_url }}</td>
+    </tr>
+    @endforeach
+</table>
+@endif
+
+<!-- V. FOTOGRAFÍAS -->
+@if($proyecto->fotografias && $proyecto->fotografias->count() > 0)
+<table>
+    <tr>
+        <td colspan="2" class="section-header">V. FOTOGRAFÍAS DEL PROYECTO</td>
+    </tr>
+    <tr>
+        <th style="background-color: #f0f0f0;">#</th>
+        <th style="background-color: #f0f0f0;">Archivo</th>
+    </tr>
+    @foreach($proyecto->fotografias as $index => $img)
+    <tr>
+        <td style="text-align: center;">{{ $index + 1 }}</td>
+        <td>{{ $img->foto_url }}</td>
+    </tr>
+    @endforeach
+</table>
+@endif
+
+
 
 </body>
 </html>
-

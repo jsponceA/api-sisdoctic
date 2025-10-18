@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('nombres',150);
             $table->string('apellidos',150);
             $table->string('correo',150)->nullable();
+            $table->string("telefono",50)->nullable();
             $table->string("tipo_documento",50)->nullable();
             $table->string("numero_documento",50)->nullable();
             $table->datetimes();

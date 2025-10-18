@@ -16,7 +16,7 @@ class IntervencionService
     public function queryListado(array $params = [])
     {
         $request = collect($params);
-        $search = str($request->get("search"))->lower();
+        $search = str($request->get("search"))->lower()->toString();
         $categoriaId = $request->get("categoria_id");
         $denominacionId = $request->get("denominacion_id");
         $responsableId = $request->get("responsable_id");

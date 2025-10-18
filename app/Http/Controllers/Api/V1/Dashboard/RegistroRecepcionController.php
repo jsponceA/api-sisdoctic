@@ -34,7 +34,7 @@ class RegistroRecepcionController extends Controller
             new Middleware(PermissionMiddleware::using("registro-recepciones-visualizar"), only: ["show"]),
             new Middleware(PermissionMiddleware::using("registro-recepciones-crear"), only: ["store"]),
             new Middleware(PermissionMiddleware::using("registro-recepciones-modificar"), only: ["update"]),
-            new Middleware(PermissionMiddleware::using("registro-recepciones-eliminar"), only: ["destroy", "eliminarDocumento", "eliminarImagen"]),
+            new Middleware(PermissionMiddleware::using("registro-recepciones-eliminar"), only: ["destroy", "eliminarDocumento", "eliminarDocumentoRespuesta"]),
             new Middleware(PermissionMiddleware::using("registro-recepciones-reportes"), only: ["reportePdf", "reporteExcel", "fichaRecepcionPdf"]),
         ];
     }
@@ -53,9 +53,8 @@ class RegistroRecepcionController extends Controller
             "current_page" => ["nullable", "integer", "min:1"],
             "list_all" => ["nullable", "in:1,0,true,false"],
             "proyecto_id" => ["nullable", "integer", Rule::exists("proyectos", "id")],
-            "responsable_id" => ["nullable", "integer", Rule::exists("responsables", "id")],
-            "tipo_recepcion" => ["nullable", "string"],
-            "estado_proceso" => ["nullable", "string"],
+            "situacion" => ["nullable", "string", "in:R,SR"],
+            "prioridad" => ["nullable", "integer", "in:1,2,3"],
             "fecha_desde" => ["nullable", "date"],
             "fecha_hasta" => ["nullable", "date"]
         ], [], [
@@ -81,43 +80,21 @@ class RegistroRecepcionController extends Controller
         try {
             $data = $request->validated();
 
-            // Procesar documentos
-            $data["documentos"] = [];
-            if ($request->has("documentos")) {
-                foreach ($request->input("documentos", []) as $index => $documento) {
-                    $archivoKey = "documentos.{$index}.archivo";
-                    $archivoGuardado = null;
-
-                    if ($request->hasFile($archivoKey)) {
-                        $archivo = $request->file($archivoKey);
-                        $archivoGuardado = basename($archivo->store("dashboard/registro-recepciones"));
-                    }
-
-                    $data["documentos"][] = [
-                        "archivo" => $archivoGuardado,
-                        "nombre_documento" => $documento['nombre_documento'] ?? null,
-                        "tipo_documento" => $documento['tipo_documento'] ?? null,
-                    ];
+            // Procesar documentos adjuntos
+            $data["documentos_adjuntos"] = [];
+            if ($request->hasFile("documentos_adjuntos")) {
+                foreach ($request->file("documentos_adjuntos") as $archivo) {
+                    $nombreArchivo = basename($archivo->store("dashboard/registro-recepciones"));
+                    $data["documentos_adjuntos"][] = $nombreArchivo;
                 }
             }
 
-            // Procesar imágenes
-            $data["imagenes"] = [];
-            if ($request->has("imagenes")) {
-                foreach ($request->input("imagenes", []) as $index => $imagen) {
-                    $fotoKey = "imagenes.{$index}.foto";
-                    $fotoGuardada = null;
-
-                    if ($request->hasFile($fotoKey)) {
-                        $foto = $request->file($fotoKey);
-                        $fotoGuardada = basename($foto->store("dashboard/registro-recepciones"));
-                    }
-
-                    $data["imagenes"][] = [
-                        "foto" => $fotoGuardada,
-                        "descripcion_foto" => $imagen['descripcion_foto'] ?? null,
-                        "tipo_foto" => $imagen['tipo_foto'] ?? null,
-                    ];
+            // Procesar documentos de respuesta
+            $data["documentos_respuesta"] = [];
+            if ($request->hasFile("documentos_respuesta")) {
+                foreach ($request->file("documentos_respuesta") as $archivo) {
+                    $nombreArchivo = basename($archivo->store("dashboard/registro-recepciones"));
+                    $data["documentos_respuesta"][] = $nombreArchivo;
                 }
             }
 
@@ -128,7 +105,7 @@ class RegistroRecepcionController extends Controller
             return response()->json(["message" => "Registro de recepción creado"], ResponseHttpCode::HTTP_CREATED);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(["message" => "Ocurrió el siguiente error al guardar: {$e->getMessage()} - {$e->getFile()} - {$e->getLine()}"], ResponseHttpCode::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json(["message" => "Error al guardar: {$e->getMessage()}"], ResponseHttpCode::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -155,47 +132,21 @@ class RegistroRecepcionController extends Controller
         try {
             $data = $request->validated();
 
-            // Procesar documentos
-            $data["documentos"] = [];
-            if ($request->has("documentos")) {
-                foreach ($request->input("documentos", []) as $index => $documento) {
-                    $archivoKey = "documentos.{$index}.archivo";
-                    $archivoGuardado = null;
-
-                    if ($request->hasFile($archivoKey)) {
-                        $archivo = $request->file($archivoKey);
-                        $archivoGuardado = basename($archivo->store("dashboard/registro-recepciones"));
-                    }
-
-                    if ($archivoGuardado) {
-                        $data["documentos"][] = [
-                            "archivo" => $archivoGuardado,
-                            "nombre_documento" => $documento['nombre_documento'] ?? null,
-                            "tipo_documento" => $documento['tipo_documento'] ?? null,
-                        ];
-                    }
+            // Procesar documentos adjuntos
+            $data["documentos_adjuntos"] = [];
+            if ($request->hasFile("documentos_adjuntos")) {
+                foreach ($request->file("documentos_adjuntos") as $archivo) {
+                    $nombreArchivo = basename($archivo->store("dashboard/registro-recepciones"));
+                    $data["documentos_adjuntos"][] = $nombreArchivo;
                 }
             }
 
-            // Procesar imágenes
-            $data["imagenes"] = [];
-            if ($request->has("imagenes")) {
-                foreach ($request->input("imagenes", []) as $index => $imagen) {
-                    $fotoKey = "imagenes.{$index}.foto";
-                    $fotoGuardada = null;
-
-                    if ($request->hasFile($fotoKey)) {
-                        $foto = $request->file($fotoKey);
-                        $fotoGuardada = basename($foto->store("dashboard/registro-recepciones"));
-                    }
-
-                    if ($fotoGuardada) {
-                        $data["imagenes"][] = [
-                            "foto" => $fotoGuardada,
-                            "descripcion_foto" => $imagen['descripcion_foto'] ?? null,
-                            "tipo_foto" => $imagen['tipo_foto'] ?? null,
-                        ];
-                    }
+            // Procesar documentos de respuesta
+            $data["documentos_respuesta"] = [];
+            if ($request->hasFile("documentos_respuesta")) {
+                foreach ($request->file("documentos_respuesta") as $archivo) {
+                    $nombreArchivo = basename($archivo->store("dashboard/registro-recepciones"));
+                    $data["documentos_respuesta"][] = $nombreArchivo;
                 }
             }
 
@@ -206,7 +157,7 @@ class RegistroRecepcionController extends Controller
             return response()->json(["message" => "Registro de recepción modificado"], ResponseHttpCode::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(["message" => "Ocurrió el siguiente error al modificar: {$e->getMessage()}"], ResponseHttpCode::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json(["message" => "Error al modificar: {$e->getMessage()}"], ResponseHttpCode::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -214,15 +165,24 @@ class RegistroRecepcionController extends Controller
      * Eliminar Registro de Recepción
      * @param int|string $id
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function destroy(int|string $id)
     {
-        $this->registroRecepcionService->eliminar($id, auth()->user()->id);
-        return response()->json(null, ResponseHttpCode::HTTP_NO_CONTENT);
+        DB::beginTransaction();
+        try {
+            $this->registroRecepcionService->eliminar($id, auth()->user()->id);
+            DB::commit();
+            return response()->json(null, ResponseHttpCode::HTTP_NO_CONTENT);
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => "Error al eliminar: {$e->getMessage()}"], ResponseHttpCode::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     /**
-     * Eliminar Documento de Registro de Recepción
+     * Eliminar Documento Adjunto
      * @param int|string $documentoId
      * @return JsonResponse
      */
@@ -233,14 +193,31 @@ class RegistroRecepcionController extends Controller
     }
 
     /**
-     * Eliminar Imagen de Registro de Recepción
-     * @param int|string $imagenId
+     * Eliminar Documento de Respuesta
+     * @param int|string $documentoId
      * @return JsonResponse
      */
-    public function eliminarImagen(int|string $imagenId)
+    public function eliminarDocumentoRespuesta(int|string $documentoId)
     {
-        $this->registroRecepcionService->eliminarImagen($imagenId);
-        return response()->json(["message" => "Imagen eliminada"], ResponseHttpCode::HTTP_OK);
+        $this->registroRecepcionService->eliminarDocumentoRespuesta($documentoId);
+        return response()->json(["message" => "Documento de respuesta eliminado"], ResponseHttpCode::HTTP_OK);
+    }
+
+    /**
+     * Modificar el estado del documento de la respuesta
+     * @param Request $request
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function modificarEstadoRespuesta(Request $request, int|string $id)
+    {
+        $request->validate([
+            "estado_documento" => ["required", "string", "max:100"]
+        ], [], [
+            "estado_documento" => "estado del documento"
+        ]);
+        $this->registroRecepcionService->modificarEstadoRespuesta($id,$request->input("estado_documento"));
+        return response()->json(["message" => "Estado de documento modificado"], ResponseHttpCode::HTTP_OK);
     }
 
     /**
@@ -252,25 +229,12 @@ class RegistroRecepcionController extends Controller
     {
         $request->validate([
             "search" => ["nullable", "string", "max:255"],
-            "per_page" => ["nullable", "integer", "min:1"],
-            "take" => ["nullable", "integer", "min:0"],
-            "current_page" => ["nullable", "integer", "min:1"],
             "list_all" => ["nullable", "boolean"]
-        ], [], [
-            "search" => "buscar",
-            "per_page" => "cantidad por página",
-            "take" => "cantidad a tomar",
-            "current_page" => "página actual",
-            "list_all" => "listar todos"
         ]);
 
         $registros = $this->registroRecepcionService->queryListado($request->mergeIfMissing(["list_all" => true])->toArray());
         $pdf = PDF::loadView("api.v1.dashboard.reportes.registro_recepcion.listado_pdf", compact("registros"))
-            ->setPaper("A4", "landscape")
-            ->setOptions([
-                'encoding' => 'UTF-8',
-                'isRemoteEnabled' => true,
-            ]);
+            ->setPaper("A4", "landscape");
         return $pdf->download("reporte_registro_recepciones.pdf");
     }
 
@@ -283,16 +247,7 @@ class RegistroRecepcionController extends Controller
     {
         $request->validate([
             "search" => ["nullable", "string", "max:255"],
-            "per_page" => ["nullable", "integer", "min:1"],
-            "take" => ["nullable", "integer", "min:0"],
-            "current_page" => ["nullable", "integer", "min:1"],
             "list_all" => ["nullable", "in:1,0,true,false"]
-        ], [], [
-            "search" => "buscar",
-            "per_page" => "cantidad por página",
-            "take" => "cantidad a tomar",
-            "current_page" => "página actual",
-            "list_all" => "listar todos"
         ]);
 
         return Excel::download(
@@ -319,9 +274,8 @@ class RegistroRecepcionController extends Controller
     public function fichaRecepcionPdf(Request $request, int|string $id)
     {
         $registro = $this->registroRecepcionService->visualizar($id);
-
         $pdf = PDF::loadView("api.v1.dashboard.reportes.registro_recepcion.ficha_recepcion", compact("registro"));
-        return $pdf->download("ficha_recepcion_{$registro->numero_recepcion}.pdf");
+        return $pdf->download("ficha_recepcion_{$registro->id}.pdf");
     }
 }
 

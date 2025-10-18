@@ -46,6 +46,7 @@
         <th>Nombres</th>
         <th>Apellidos</th>
         <th>Correo</th>
+        <th>Teléfono</th>
         <th>Tipo Doc.</th>
         <th>Núm. Doc.</th>
     </tr>
@@ -56,6 +57,7 @@
             <td>{{ $r->nombres }}</td>
             <td>{{ $r->apellidos }}</td>
             <td>{{ $r->correo ?? 'N/A' }}</td>
+            <td>{{ $r->telefono ?? 'N/A' }}</td>
             <td>{{ $r->tipo_documento ?? 'N/A' }}</td>
             <td>{{ $r->numero_documento ?? 'N/A' }}</td>
         </tr>

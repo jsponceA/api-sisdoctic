@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1\Dashboard;
 
+use App\Rules\UniqueColumn;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 
 class ProyectoRequest extends FormRequest
@@ -14,90 +16,78 @@ class ProyectoRequest extends FormRequest
 
     public function rules(): array
     {
-        $commonRules = [
-            // Relaciones
-            "categoria_id" => ["nullable", "exists:categorias,id"],
-            "responsable_id" => ["nullable", "exists:responsables,id"],
+        switch ($this->getMethod()){
+            case "POST":
+                return [
+                    //"codigo_proyecto" => ["nullable", "string", "max:50"],
+                    "nombre" => ["required","max:255",new UniqueColumn("proyectos","nombre",null,true)],
+                    "fecha_inicio" => ["nullable"],
+                    "fecha_fin" => ["nullable"],
+                    "descripcion" => ["nullable", "string"],
 
-            // I. DATOS DE IDENTIFICACIÓN
-            "codigo_proyecto" => ["nullable", "string", "max:50"],
-            "nombre_proyecto" => ["nullable", "string", "max:255"],
-            "fecha_inicio" => ["nullable", "date"],
-            "fecha_fin" => ["nullable", "date"],
-            "ubicacion" => ["nullable", "string", "max:255"],
-            "estado" => ["nullable", "string", "max:50"],
-            "descripcion" => ["nullable", "string"],
+                    // RESPONSABLES DEL PROYECTO
+                    "responsables" => ["nullable", "array"],
+                    "responsables.*.responsable_id" => ["required", Rule::exists("responsables","id")],
+                    "responsables.*.especialidad_id" => ["nullable", Rule::exists("especialidades","id")],
 
-            // II. DATOS TÉCNICOS
-            "presupuesto" => ["nullable", "numeric", "min:0"],
-            "fuente_financiamiento" => ["nullable", "string", "max:255"],
-            "objetivos" => ["nullable", "string"],
-            "alcance" => ["nullable", "string"],
-            "numero_beneficiarios" => ["nullable", "integer", "min:0"],
+                    // TIPOS DE DOCUMENTO
+                    "tipos_documento" => ["nullable", "array"],
+                    "tipos_documento.*.tipo_documento_id" => ["required", Rule::exists("tipos_documento","id")],
+                    "tipos_documento.*.dias_plazo" => ["nullable", "integer", "min:0"],
+                    "tipos_documento.*.penalidad" => ["nullable", "numeric", "min:0"],
 
-            // III. EQUIPO Y RECURSOS
-            "equipo_trabajo" => ["nullable", "string"],
-            "recursos_materiales" => ["nullable", "string"],
-            "recursos_tecnologicos" => ["nullable", "string"],
+                    // DOCUMENTOS
+                    "documentos" => ["nullable", "array"],
+                    "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
 
-            // IV. SEGUIMIENTO
-            "porcentaje_avance" => ["nullable", "integer", "min:0", "max:100"],
-            "resultados_obtenidos" => ["nullable", "string"],
-            "dificultades_encontradas" => ["nullable", "string"],
-            "lecciones_aprendidas" => ["nullable", "string"],
-            "observaciones" => ["nullable", "string"],
-            "recomendaciones" => ["nullable", "string"],
+                    // FOTOGRAFÍAS
+                    "fotografias" => ["nullable", "array"],
+                    "fotografias.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+                ];
+            case "PUT":
+                return [
+                    //"codigo_proyecto" => ["nullable", "string", "max:50"],
+                    "nombre" => ["required","max:255",new UniqueColumn("proyectos","nombre",$this->route()->parameter("proyecto"),true)],
+                    "fecha_inicio" => ["nullable"],
+                    "fecha_fin" => ["nullable"],
+                    "descripcion" => ["nullable", "string"],
 
-            // Actividades del proyecto (tabla relacionada)
-            "actividades" => ["nullable", "array"],
-            "actividades.*.nombre_actividad" => ["nullable", "string"],
-            "actividades.*.descripcion_actividad" => ["nullable", "string"],
-            "actividades.*.fecha_programada" => ["nullable", "date"],
-            "actividades.*.responsable_actividad" => ["nullable", "string"],
-            "actividades.*.estado_actividad" => ["nullable", "string", "max:50"],
+                    // RESPONSABLES DEL PROYECTO
+                    "responsables" => ["nullable", "array"],
+                    "responsables.*.responsable_id" => ["required", Rule::exists("responsables","id")],
+                    "responsables.*.especialidad_id" => ["nullable", Rule::exists("especialidades","id")],
 
-            // Documentos (tabla relacionada)
-            "documentos" => ["nullable", "array"],
-            "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
+                    // TIPOS DE DOCUMENTO
+                    "tipos_documento" => ["nullable", "array"],
+                    "tipos_documento.*.tipo_documento_id" => ["required", Rule::exists("tipos_documento","id")],
+                    "tipos_documento.*.dias_plazo" => ["nullable", "integer", "min:0"],
+                    "tipos_documento.*.penalidad" => ["nullable", "numeric", "min:0"],
 
-            // Imágenes (tabla relacionada)
-            "imagenes" => ["nullable", "array"],
-            "imagenes.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
-        ];
+                    // DOCUMENTOS
+                    "documentos" => ["nullable", "array"],
+                    "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
 
-        return $commonRules;
+                    // FOTOGRAFÍAS
+                    "fotografias" => ["nullable", "array"],
+                    "fotografias.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+                ];
+            default:
+                return [];
+        }
     }
 
     public function attributes(): array
     {
         return [
-            "categoria_id" => "categoría",
-            "responsable_id" => "responsable",
             "codigo_proyecto" => "código de proyecto",
-            "nombre_proyecto" => "nombre del proyecto",
+            "nombre" => "nombre del proyecto",
             "fecha_inicio" => "fecha de inicio",
             "fecha_fin" => "fecha de fin",
-            "ubicacion" => "ubicación",
-            "estado" => "estado",
             "descripcion" => "descripción",
-            "presupuesto" => "presupuesto",
-            "fuente_financiamiento" => "fuente de financiamiento",
-            "objetivos" => "objetivos",
-            "alcance" => "alcance",
-            "numero_beneficiarios" => "número de beneficiarios",
-            "equipo_trabajo" => "equipo de trabajo",
-            "recursos_materiales" => "recursos materiales",
-            "recursos_tecnologicos" => "recursos tecnológicos",
-            "porcentaje_avance" => "porcentaje de avance",
-            "resultados_obtenidos" => "resultados obtenidos",
-            "dificultades_encontradas" => "dificultades encontradas",
-            "lecciones_aprendidas" => "lecciones aprendidas",
-            "observaciones" => "observaciones",
-            "recomendaciones" => "recomendaciones",
-            "actividades" => "actividades",
+            "responsables" => "responsables",
+            "tipos_documento" => "tipos de documento",
             "documentos" => "documentos",
-            "imagenes" => "imágenes",
+            "fotografias" => "fotografías",
         ];
     }
 }
-

@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -81,14 +82,14 @@ class ProyectoController extends Controller
             $data = $request->validated();
 
             $data["documentos"] = [];
-            $data["imagenes"] = [];
+            $data["fotografias"] = [];
 
             foreach ($request->file("documentos", []) ?? [] as $archivo) {
                 $data["documentos"][] = basename($archivo->store("dashboard/proyectos"));
             }
 
-            foreach ($request->file("imagenes", []) ?? [] as $foto) {
-                $data["imagenes"][] = basename($foto->store("dashboard/proyectos"));
+            foreach ($request->file("fotografias", []) ?? [] as $foto) {
+                $data["fotografias"][] = basename($foto->store("dashboard/proyectos"));
             }
 
             $data["creado_por_usuario_id"] = auth()->user()->id;
@@ -126,14 +127,14 @@ class ProyectoController extends Controller
             $data = $request->validated();
 
             $data["documentos"] = [];
-            $data["imagenes"] = [];
+            $data["fotografias"] = [];
 
             foreach ($request->file("documentos", []) ?? [] as $archivo) {
                 $data["documentos"][] = basename($archivo->store("dashboard/proyectos"));
             }
 
-            foreach ($request->file("imagenes", []) ?? [] as $foto) {
-                $data["imagenes"][] = basename($foto->store("dashboard/proyectos"));
+            foreach ($request->file("fotografias", []) ?? [] as $foto) {
+                $data["fotografias"][] = basename($foto->store("dashboard/proyectos"));
             }
 
             $data["modificado_por_usuario_id"] = auth()->user()->id;
@@ -151,11 +152,19 @@ class ProyectoController extends Controller
      * Eliminar Proyecto
      * @param int|string $id
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function destroy(int|string $id)
     {
-        $this->proyectoService->eliminar($id, auth()->user()->id);
-        return response()->json(null, ResponseHttpCode::HTTP_NO_CONTENT);
+       DB::beginTransaction();
+        try {
+            $this->proyectoService->eliminar($id, auth()->user()->id);
+            DB::commit();
+            return response()->json(null, ResponseHttpCode::HTTP_NO_CONTENT);
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["message" => "Ocurrió el siguiente error al eliminar: {$e->getMessage()}"], ResponseHttpCode::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**

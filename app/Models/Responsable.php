@@ -22,6 +22,7 @@ class Responsable extends Model
         "correo",
         "tipo_documento",
         "numero_documento",
+        "telefono"
     ];
 
     protected $appends = [

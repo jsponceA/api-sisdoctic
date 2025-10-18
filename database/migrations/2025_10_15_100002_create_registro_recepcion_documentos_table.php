@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('registro_recepcion_id');
             $table->string('archivo')->nullable();
-            $table->string('nombre_documento', 255)->nullable();
-            $table->string('tipo_documento', 100)->nullable(); // Oficio, Carta, Acta, Factura, etc.
+            $table->string('nombre_original', 255)->nullable();
         });
     }
 
@@ -28,4 +27,3 @@ return new class extends Migration
         Schema::dropIfExists('registro_recepcion_documentos');
     }
 };
-

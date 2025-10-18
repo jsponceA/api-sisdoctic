@@ -16,8 +16,7 @@ class RegistroRecepcionDocumento extends Model
     protected $fillable = [
         "registro_recepcion_id",
         "archivo",
-        "nombre_documento",
-        "tipo_documento",
+        "nombre_original",
     ];
 
     protected $appends = [
@@ -38,4 +37,3 @@ class RegistroRecepcionDocumento extends Model
         );
     }
 }
-

@@ -3,7 +3,8 @@
 namespace App\Services\Api\V1\Dashboard;
 
 use App\Models\Proyecto;
-use App\Models\ProyectoActividad;
+use App\Models\ProyectoResponsable;
+use App\Models\ProyectoTipoDocumento;
 use App\Models\ProyectoDocumento;
 use App\Models\ProyectoImagen;
 use Illuminate\Support\Facades\DB;
@@ -15,10 +16,7 @@ class ProyectoService
     public function queryListado(array $params = [])
     {
         $request = collect($params);
-        $search = str($request->get("search"))->lower();
-        $categoriaId = $request->get("categoria_id");
-        $responsableId = $request->get("responsable_id");
-        $estado = $request->get("estado");
+        $search = str($request->get("search"))->lower()->toString();
         $fechaDesde = $request->get("fecha_desde");
         $fechaHasta = $request->get("fecha_hasta");
         $perPage = $request->get("per_page", 15);
@@ -29,18 +27,15 @@ class ProyectoService
         return Proyecto::query()
             ->with([
                 "creadoPor", "modificadoPor", "eliminadoPor",
-                "categoria", "responsable",
-                "actividades", "documentos", "imagenes"
+                "responsables",
+                "tiposDocumento",
+                "documentos", "fotografias"
             ])
             ->when(!empty($search), fn($q) => $q->where(function ($query) use ($search) {
                 $query->where(DB::raw("LOWER(codigo_proyecto)"), "LIKE", "%{$search}%")
-                    ->orWhere(DB::raw("LOWER(nombre_proyecto)"), "LIKE", "%{$search}%")
-                    ->orWhere(DB::raw("LOWER(ubicacion)"), "LIKE", "%{$search}%")
+                    ->orWhere(DB::raw("LOWER(nombre)"), "LIKE", "%{$search}%")
                     ->orWhere(DB::raw("LOWER(descripcion)"), "LIKE", "%{$search}%");
             }))
-            ->when(!empty($categoriaId), fn($q) => $q->where("categoria_id", $categoriaId))
-            ->when(!empty($responsableId), fn($q) => $q->where("responsable_id", $responsableId))
-            ->when(!empty($estado), fn($q) => $q->where("estado", $estado))
             ->when(!empty($fechaDesde), fn($q) => $q->whereDate("fecha_inicio", ">=", $fechaDesde))
             ->when(!empty($fechaHasta), fn($q) => $q->whereDate("fecha_fin", "<=", $fechaHasta))
             ->orderBy("id", "DESC")
@@ -51,20 +46,28 @@ class ProyectoService
     public function guardar(array $data)
     {
         $data = collect($data);
+        // Crear proyecto
         $proyecto = new Proyecto();
-        $proyecto->fill($data->except("actividades", "documentos", "imagenes")->toArray());
+        $proyecto->fill($data->except("responsables", "tipos_documento", "documentos", "fotografias")->toArray());
         $proyecto->codigo_proyecto = $this->generarCodigoProyecto();
         $proyecto->save();
 
-        // Guardar actividades del proyecto
-        foreach ($data->get("actividades", []) ?? [] as $actividad) {
-            ProyectoActividad::query()->create([
+        // Guardar responsables del proyecto
+        foreach ($data->get("responsables", []) ?? [] as $responsable) {
+            ProyectoResponsable::query()->create([
                 "proyecto_id" => $proyecto->id,
-                "nombre_actividad" => $actividad['nombre_actividad'] ?? null,
-                "descripcion_actividad" => $actividad['descripcion_actividad'] ?? null,
-                "fecha_programada" => $actividad['fecha_programada'] ?? null,
-                "responsable_actividad" => $actividad['responsable_actividad'] ?? null,
-                "estado_actividad" => $actividad['estado_actividad'] ?? null,
+                "responsable_id" => $responsable['responsable_id'],
+                "especialidad_id" => $responsable['especialidad_id'] ?? null,
+            ]);
+        }
+
+        // Guardar tipos de documento
+        foreach ($data->get("tipos_documento", []) ?? [] as $tipoDoc) {
+            ProyectoTipoDocumento::query()->create([
+                "proyecto_id" => $proyecto->id,
+                "tipo_documento_id" => $tipoDoc['tipo_documento_id'],
+                "dias_plazo" => $tipoDoc['dias_plazo'] ?? null,
+                "penalidad" => $tipoDoc['penalidad'] ?? null,
             ]);
         }
 
@@ -76,8 +79,8 @@ class ProyectoService
             ]);
         }
 
-        // Guardar imágenes
-        foreach ($data->get("imagenes", []) ?? [] as $foto) {
+        // Guardar fotografías
+        foreach ($data->get("fotografias", []) ?? [] as $foto) {
             ProyectoImagen::query()->create([
                 "proyecto_id" => $proyecto->id,
                 "foto" => $foto,
@@ -91,8 +94,9 @@ class ProyectoService
     {
         return Proyecto::query()
             ->with([
-                "categoria", "responsable",
-                "actividades", "documentos", "imagenes",
+                "responsables.responsable", "responsables.especialidad",
+                "tiposDocumento.tipoDocumento",
+                "documentos", "fotografias",
                 "creadoPor", "modificadoPor", "eliminadoPor"
             ])
             ->findOrFail($id);
@@ -103,23 +107,32 @@ class ProyectoService
         $data = collect($data);
         $proyecto = Proyecto::query()->findOrFail($id);
 
-        $proyecto->fill($data->except("codigo_proyecto", "actividades", "documentos", "imagenes")->toArray());
+        // Actualizar proyecto
+        $proyecto->fill($data->except("codigo_proyecto", "responsables", "tipos_documento", "documentos", "fotografias")->toArray());
         $proyecto->update();
 
-        // Actualizar actividades
-        ProyectoActividad::query()->where("proyecto_id", $proyecto->id)->delete();
-        foreach ($data->get("actividades", []) ?? [] as $actividad) {
-            ProyectoActividad::query()->create([
+        // Actualizar responsables
+        ProyectoResponsable::query()->where("proyecto_id", $proyecto->id)->delete();
+        foreach ($data->get("responsables", []) ?? [] as $responsable) {
+            ProyectoResponsable::query()->create([
                 "proyecto_id" => $proyecto->id,
-                "nombre_actividad" => $actividad['nombre_actividad'] ?? null,
-                "descripcion_actividad" => $actividad['descripcion_actividad'] ?? null,
-                "fecha_programada" => $actividad['fecha_programada'] ?? null,
-                "responsable_actividad" => $actividad['responsable_actividad'] ?? null,
-                "estado_actividad" => $actividad['estado_actividad'] ?? null,
+                "responsable_id" => $responsable['responsable_id'],
+                "especialidad_id" => $responsable['especialidad_id'] ?? null,
             ]);
         }
 
-        // Guardar documentos
+        // Actualizar tipos de documento
+        ProyectoTipoDocumento::query()->where("proyecto_id", $proyecto->id)->delete();
+        foreach ($data->get("tipos_documento", []) ?? [] as $tipoDoc) {
+            ProyectoTipoDocumento::query()->create([
+                "proyecto_id" => $proyecto->id,
+                "tipo_documento_id" => $tipoDoc['tipo_documento_id'],
+                "dias_plazo" => $tipoDoc['dias_plazo'] ?? null,
+                "penalidad" => $tipoDoc['penalidad'] ?? null,
+            ]);
+        }
+
+        // Guardar nuevos documentos
         foreach ($data->get("documentos", []) ?? [] as $archivo) {
             ProyectoDocumento::query()->create([
                 "proyecto_id" => $proyecto->id,
@@ -127,8 +140,8 @@ class ProyectoService
             ]);
         }
 
-        // Guardar imágenes
-        foreach ($data->get("imagenes", []) ?? [] as $foto) {
+        // Guardar nuevas fotografías
+        foreach ($data->get("fotografias", []) ?? [] as $foto) {
             ProyectoImagen::query()->create([
                 "proyecto_id" => $proyecto->id,
                 "foto" => $foto,
@@ -149,20 +162,22 @@ class ProyectoService
             $documento->delete();
         }
 
-        // Eliminar todas las imágenes
+        // Eliminar todas las fotografías
         $imagenes = ProyectoImagen::query()->where("proyecto_id", $proyecto->id)->get();
         foreach ($imagenes as $imagen) {
             Storage::delete("dashboard/proyectos/{$imagen->foto}");
             $imagen->delete();
         }
 
-        // Eliminar actividades
-        ProyectoActividad::query()->where("proyecto_id", $proyecto->id)->delete();
+        // Eliminar responsables
+        ProyectoResponsable::query()->where("proyecto_id", $proyecto->id)->delete();
+
+        // Eliminar tipos de documento
+        ProyectoTipoDocumento::query()->where("proyecto_id", $proyecto->id)->delete();
 
         $proyecto->eliminado_por_usuario_id = $userId;
         $proyecto->update();
         $proyecto->delete();
-
         return $proyecto;
     }
 

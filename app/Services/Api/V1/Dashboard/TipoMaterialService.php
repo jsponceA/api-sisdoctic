@@ -10,7 +10,7 @@ class TipoMaterialService
     public function queryListado(array $params = [])
     {
         $request = collect($params);
-        $search = str($request->get("search"))->lower();
+        $search = str($request->get("search"))->lower()->toString();
         $perPage = $request->get("per_page", 15);
         $take = $request->get("take", 0);
         $currentPage = $request->get("current_page", 1);
