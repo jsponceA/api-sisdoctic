@@ -107,31 +107,28 @@ Route::group(["prefix" => "v1/dashboard","as" => "api.v1.dashboard."], function 
 
         /* RUTAS MODULO ESTADÍSTICAS - DASHBOARD*/
         Route::prefix("estadisticas")->group(function () {
-            // Cards y resumen general
-            Route::get("resumen-general", [EstadisticaController::class, "resumenGeneral"]);
-            Route::get("dashboard-completo", [EstadisticaController::class, "dashboardCompleto"]);
 
-            // Gráficos de Artículos
-            Route::get("articulos/por-tipo-material", [EstadisticaController::class, "articulosPorTipoMaterial"]);
-            Route::get("articulos/por-estado-conservacion", [EstadisticaController::class, "articulosPorEstadoConservacion"]);
-            Route::get("articulos/por-sala", [EstadisticaController::class, "articulosPorSala"]);
-            Route::get("articulos/por-denominacion", [EstadisticaController::class, "articulosPorDenominacion"]);
-            Route::get("articulos/por-mes", [EstadisticaController::class, "articulosPorMes"]);
-            Route::get("articulos/distribucion-integridad", [EstadisticaController::class, "distribucionIntegridad"]);
+            // ========== NUEVOS KPIs: PROYECTOS Y REGISTRO DE RECEPCIONES ==========
 
-            // Gráficos de Intervenciones
-            Route::get("intervenciones/por-categoria", [EstadisticaController::class, "intervencionesPorCategoria"]);
-            Route::get("intervenciones/por-conservador", [EstadisticaController::class, "intervencionesPorConservador"]);
-            Route::get("intervenciones/por-mes", [EstadisticaController::class, "intervencionesPorMes"]);
-            Route::get("intervenciones/estado", [EstadisticaController::class, "estadoIntervenciones"]);
+            // KPI General - Cards principales
+            Route::get("kpi-general", [EstadisticaController::class, "kpiGeneral"]);
 
-            // Tablas y rankings
-            Route::get("responsables/top-articulos", [EstadisticaController::class, "topResponsablesArticulos"]);
-            Route::get("ultimos-articulos", [EstadisticaController::class, "ultimosArticulos"]);
-            Route::get("ultimas-intervenciones", [EstadisticaController::class, "ultimasIntervenciones"]);
+            // KPIs de Proyectos
+            Route::get("proyectos/por-tipo-documento", [EstadisticaController::class, "proyectosPorTipoDocumento"]);
+            Route::get("proyectos/top-actividad", [EstadisticaController::class, "topProyectosActividad"]);
 
-            // Comparativas
-            Route::get("comparativa-anual", [EstadisticaController::class, "comparativaAnual"]);
+            // KPIs de Recepciones - Agrupaciones
+            Route::get("recepciones/por-tipo-documento", [EstadisticaController::class, "recepcionesPorTipoDocumento"]);
+            Route::get("recepciones/por-formato-documento", [EstadisticaController::class, "recepcionesPorFormatoDocumento"]);
+            Route::get("recepciones/por-proyecto", [EstadisticaController::class, "recepcionesPorProyecto"]);
+            Route::get("recepciones/por-especialidad", [EstadisticaController::class, "recepcionesPorEspecialidad"]);
+            Route::get("recepciones/por-estado", [EstadisticaController::class, "recepcionesPorEstado"]);
+            Route::get("recepciones/por-prioridad", [EstadisticaController::class, "recepcionesPorPrioridad"]);
+
+            // KPIs de Recepciones - Métricas de rendimiento
+            Route::get("recepciones/tiempo-promedio-respuesta", [EstadisticaController::class, "tiempoPromedioRespuesta"]);
+            Route::get("recepciones/con-retraso", [EstadisticaController::class, "recepcionesConRetraso"]);
+            Route::get("recepciones/tendencia-mensual", [EstadisticaController::class, "tendenciaMensualRecepciones"]);
         });
 
         /* RUTAS MODULO PROYECTOS*/
@@ -144,6 +141,8 @@ Route::group(["prefix" => "v1/dashboard","as" => "api.v1.dashboard."], function 
         /* RUTAS MODULO REGISTRO DE RECEPCIONES*/
         Route::get("registro-recepciones/generar-codigo-recepcion", [RegistroRecepcionController::class,"generarCodigoRecepcion"]);
         Route::patch("registro-recepciones/modificar-estado-respuesta/{id}", [RegistroRecepcionController::class,"modificarEstadoRespuesta"]);
+        Route::patch("registro-recepciones/modificar-estado-respuesta-prioridad/{id}", [RegistroRecepcionController::class,"modificarEstadoRespuestaPrioridad"]);
+        Route::patch("registro-recepciones/modificar-estado-respuesta-situacion/{id}", [RegistroRecepcionController::class,"modificarEstadoRespuestaSituacion"]);
         Route::post("registro-recepciones/ficha-recepcion-pdf/{id}", [RegistroRecepcionController::class,"fichaRecepcionPdf"]);
         Route::post("registro-recepciones/reporte-pdf", [RegistroRecepcionController::class,"reportePdf"]);
         Route::post("registro-recepciones/reporte-excel", [RegistroRecepcionController::class,"reporteExcel"]);

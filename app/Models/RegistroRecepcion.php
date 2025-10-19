@@ -33,6 +33,7 @@ class RegistroRecepcion extends Model
         "destino",
         // DATOS DE RESPUESTA
         "fecha_respuesta",
+        "tipo_documento_clasificacion_id_resp",
         "num_docs_resp",
         "atencion",
         "acciones_observaciones",
@@ -41,6 +42,7 @@ class RegistroRecepcion extends Model
         "situacion",
         "num_dias_sin_responder",
         "fecha_para_responder",
+        "dias_defasados",
         "estado_documento",
     ];
 
@@ -57,7 +59,7 @@ class RegistroRecepcion extends Model
     // Relaciones principales
     public function proyecto(): BelongsTo
     {
-        return $this->belongsTo(Proyecto::class, "proyecto_id", "id");
+        return $this->belongsTo(Proyecto::class, "proyecto_id", "id")->with(["tiposDocumento"]);
     }
 
     public function tipoDocumento(): BelongsTo
@@ -84,6 +86,11 @@ class RegistroRecepcion extends Model
     public function documentosRespuesta(): HasMany
     {
         return $this->hasMany(RegistroRecepcionDocumentoRespuesta::class, "registro_recepcion_id", "id");
+    }
+
+    public function responsablesDestino(): HasMany
+    {
+        return $this->hasMany(RegistroRecepcionDestino::class, "registro_recepcion_id", "id")->with(["responsable"]);
     }
 
     // Relaciones de auditoría

@@ -30,12 +30,12 @@ return new class extends Migration
             $table->date('fecha_entrega_area')->nullable();
             $table->string('num_doc_recep', 100)->nullable();
             $table->string('asunto', 500)->nullable();
-            $table->string('destino', 255)->nullable();
 
             // DATOS DE RESPUESTA
+            $table->unsignedBigInteger("tipo_documento_clasificacion_id_resp")->nullable();
             $table->date('fecha_respuesta')->nullable();
             $table->string('num_docs_resp', 100)->nullable();
-            $table->string('atencion', 255)->nullable();
+            $table->string('atencion', 150)->nullable();
             $table->text('acciones_observaciones')->nullable();
 
             // ESTADO DE RESPUESTA
@@ -43,8 +43,10 @@ return new class extends Migration
             $table->enum('situacion', ['R', 'SR'])->default('SR')->nullable(); // R=Respondido, SR=Sin Responder
             $table->integer('num_dias_sin_responder')->nullable();
             $table->date('fecha_para_responder')->nullable();
+            $table->integer('dias_defasados')->nullable();
 
             $table->string('estado_documento', 100)->nullable();
+
 
             $table->datetimes();
             $table->softDeletesDatetime();

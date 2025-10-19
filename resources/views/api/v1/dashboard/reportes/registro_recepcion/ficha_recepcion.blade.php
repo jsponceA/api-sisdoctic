@@ -93,6 +93,48 @@
     <img src="{{public_path('img/logo_puruchuco.png')}}" style="width: 111px;height: 60px;float: right" alt="Logo Puruchuco">
 </header>--}}
 
+@php
+    // Función para calcular días sin responder
+    $calcularDiasSinResponder = function($fechaEntregaArea) {
+        if (!$fechaEntregaArea) return '-';
+        $hoy = now();
+        $fechaEntrega = \Carbon\Carbon::parse($fechaEntregaArea);
+        return abs((int) $fechaEntrega->diffInDays($hoy, false));
+    };
+
+    // Función para calcular fecha para responder
+    $calcularFechaParaResponder = function($fechaEntregaArea, $diasPlazo) {
+        if (!$fechaEntregaArea || !$diasPlazo) return '-';
+        $fechaEntrega = \Carbon\Carbon::parse($fechaEntregaArea);
+        return $fechaEntrega->copy()->addDays($diasPlazo);
+    };
+
+    // Función para calcular días defasados
+    $calcularDiasDefasados = function($fechaParaResponder) {
+        if (!$fechaParaResponder || $fechaParaResponder === '-') return '-';
+        $hoy = now();
+        $fechaLimite = is_string($fechaParaResponder) ? \Carbon\Carbon::parse($fechaParaResponder) : $fechaParaResponder;
+        if ($hoy->isAfter($fechaLimite)) {
+            return abs((int) $fechaLimite->diffInDays($hoy, false));
+        }
+        return 0;
+    };
+
+    // Obtener días de plazo del tipo de documento del proyecto
+    $diasPlazo = null;
+    if ($registro->proyecto && $registro->tipo_documento_id) {
+        $tipoDocProyecto = $registro->proyecto->tiposDocumento->firstWhere('tipo_documento_id', $registro->tipo_documento_id);
+        if ($tipoDocProyecto) {
+            $diasPlazo = $tipoDocProyecto->dias_plazo;
+        }
+    }
+
+    // Calcular valores
+    $diasSinResponder = $calcularDiasSinResponder($registro->fecha_entrega_area);
+    $fechaParaResponder = $calcularFechaParaResponder($registro->fecha_entrega_area, $diasPlazo);
+    $diasDefasados = $calcularDiasDefasados($fechaParaResponder);
+@endphp
+
 <div class="titulo-principal">FICHA DE REGISTRO DE RECEPCIÓN</div>
 
 <!-- I. PROYECTO ASOCIADO -->
@@ -101,12 +143,10 @@
         <td colspan="4" class="section-header">I. PROYECTO ASOCIADO</td>
     </tr>
     <tr class="info-row">
-        <td class="label-cell">Código de Proyecto:</td>
-        <td colspan="3" class="content-cell">{{ $registro->proyecto?->codigo_proyecto }}</td>
-    </tr>
-    <tr class="info-row">
-        <td class="label-cell">Nombre del Proyecto:</td>
-        <td colspan="3" class="content-cell">{{ $registro->proyecto?->nombre }}</td>
+        <td class="label-cell" style="width: 70px">Código de Proyecto:</td>
+        <td class="content-cell" style="width: 100px">{{ $registro->proyecto?->codigo_proyecto ?? '-' }}</td>
+        <td class="label-cell"  style="width: 140px">Nombre del Proyecto:</td>
+        <td class="content-cell">{{ $registro->proyecto?->nombre ?? '-' }}</td>
     </tr>
 </table>
 
@@ -117,34 +157,43 @@
     </tr>
     <tr class="info-row">
         <td class="label-cell">Fecha de Emisión:</td>
-        <td class="content-cell">{{ $registro->fecha_emision_format }}</td>
+        <td class="content-cell">{{ $registro->fecha_emision_format ?? '-' }}</td>
         <td class="label-cell">Fecha de Recepción:</td>
-        <td class="content-cell">{{ $registro->fecha_recepcion_format }}</td>
+        <td class="content-cell">{{ $registro->fecha_recepcion_format ?? '-' }}</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">Fecha Entrega al Área:</td>
-        <td class="content-cell">{{ $registro->fecha_entrega_area_format }}</td>
+        <td class="content-cell">{{ $registro->fecha_entrega_area_format ?? '-' }}</td>
         <td class="label-cell">Tipo de Documento:</td>
-        <td class="content-cell">{{ $registro->tipoDocumento?->nombre }}</td>
+        <td class="content-cell">{{ $registro->tipoDocumento?->nombre ?? '-' }}</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">N° Doc Recepción:</td>
-        <td class="content-cell" colspan="3">{{ $registro->num_doc_recep }}</td>
+        <td class="content-cell" colspan="3">{{ $registro->num_doc_recep ?? '-' }}</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">Asunto:</td>
-        <td colspan="3" class="content-cell">{{ $registro->asunto }}</td>
+        <td colspan="3" class="content-cell">{{ $registro->asunto ?? '-' }}</td>
     </tr>
-
     <tr class="info-row">
         <td class="label-cell">Tipo Doc Clasificación:</td>
-        <td class="content-cell">{{ $registro->tipoDocumentoClasificacion?->nombre }}</td>
-        <td class="label-cell">Especialidad:</td>
-        <td class="content-cell">{{ $registro->especialidad?->nombre }}</td>
+        <td class="content-cell" colspan="3">{{ $registro->tipoDocumentoClasificacion?->nombre ?? '-' }}</td>
     </tr>
     <tr class="info-row">
-        <td class="label-cell">Destino:</td>
-        <td colspan="3" class="content-cell">{{ $registro->destino }}</td>
+        <td class="label-cell">Especialidad:</td>
+        <td class="content-cell" colspan="3">{{ $registro->especialidad?->nombre ?? '-' }}</td>
+    </tr>
+    <tr class="info-row">
+        <td class="label-cell">Responsables Destino:</td>
+        <td colspan="3" class="content-cell">
+            @if($registro->responsablesDestino && $registro->responsablesDestino->count() > 0)
+                @foreach($registro->responsablesDestino as $rd)
+                    <div>• {{ $rd->responsable?->nombre_completo ?? '-' }}</div>
+                @endforeach
+            @else
+                -
+            @endif
+        </td>
     </tr>
 </table>
 
@@ -161,11 +210,11 @@
     </tr>
     <tr class="info-row">
         <td class="label-cell">Atención:</td>
-        <td colspan="3" class="content-cell">{{ $registro->atencion }}</td>
+        <td colspan="3" class="content-cell">{{ $registro->atencion ?? '-' }}</td>
     </tr>
     <tr class="info-row">
         <td class="label-cell">Acciones y Observaciones:</td>
-        <td colspan="3" class="content-cell text-area">{{ $registro->acciones_observaciones }}</td>
+        <td colspan="3" class="content-cell text-area">{{ $registro->acciones_observaciones ?? '-' }}</td>
     </tr>
 </table>
 
@@ -175,32 +224,68 @@
         <td colspan="4" class="section-header">IV. ESTADO DE RESPUESTA</td>
     </tr>
     <tr class="info-row">
-        <td class="label-cell">Situación:</td>
+        <td class="label-cell">Estado Documento:</td>
         <td class="content-cell">
-            @if($registro->situacion == 'R')
-                <span class="badge badge-success">Respondido</span>
+            @if($registro->estado_documento == "aprobado")
+                Aprobado
+            @elseif($registro->estado_documento == "observado")
+                Observado (No Aprobado)
+            @elseif($registro->estado_documento == "en_proceso")
+                En Proceso
             @else
-                <span class="badge badge-danger">Sin Responder</span>
+                -
             @endif
         </td>
         <td class="label-cell">Prioridad:</td>
         <td class="content-cell">
             @if($registro->prioridad == 1)
-                Alta
+                Baja
             @elseif($registro->prioridad == 2)
                 Media
             @elseif($registro->prioridad == 3)
-                Baja
+                Alta
             @else
                 -
             @endif
         </td>
     </tr>
     <tr class="info-row">
+        <td class="label-cell">Situación:</td>
+        <td class="content-cell">
+            @if($registro->situacion == 'R')
+                <span class="badge badge-success">Respondido</span>
+            @elseif($registro->situacion == 'SR')
+                <span class="badge badge-danger">Sin Responder</span>
+            @else
+                -
+            @endif
+        </td>
         <td class="label-cell">N° Días Sin Responder:</td>
-        <td class="content-cell">{{ $registro->num_dias_sin_responder ?? '-' }}</td>
+        <td class="content-cell">
+            @if($diasSinResponder !== '-')
+                {{ $diasSinResponder }} días
+            @else
+                -
+            @endif
+        </td>
+    </tr>
+    <tr class="info-row">
         <td class="label-cell">Fecha Para Responder:</td>
-        <td class="content-cell">{{ $registro->fecha_para_responder_format ?? '-' }}</td>
+        <td class="content-cell">
+            @if($fechaParaResponder !== '-')
+                {{ $fechaParaResponder->format('d/m/Y') }}
+            @else
+                -
+            @endif
+        </td>
+        <td class="label-cell">Días Defasados:</td>
+        <td class="content-cell">
+            @if($diasDefasados !== '-')
+                {{ $diasDefasados }} días
+            @else
+                -
+            @endif
+        </td>
     </tr>
 </table>
 
@@ -217,7 +302,7 @@
     @foreach($registro->documentosAdjuntos as $index => $doc)
     <tr>
         <td style="text-align: center;">{{ $index + 1 }}</td>
-        <td>{{ $doc->nombre_original }}</td>
+        <td><a href="{{ $doc->archivo_url }}" target="_blank">{{ $doc->archivo_url }}</a> </td>
     </tr>
     @endforeach
 </table>
@@ -236,13 +321,11 @@
     @foreach($registro->documentosRespuesta as $index => $doc)
     <tr>
         <td style="text-align: center;">{{ $index + 1 }}</td>
-        <td>{{ $doc->nombre_original }}</td>
+        <td><a href="{{ $doc->archivo_url }}" target="_blank">{{ $doc->archivo_url }}</a> </td>
     </tr>
     @endforeach
 </table>
 @endif
-
-
 
 </body>
 </html>

@@ -3,6 +3,7 @@
 namespace App\Services\Api\V1\Dashboard;
 
 use App\Models\RegistroRecepcion;
+use App\Models\RegistroRecepcionDestino;
 use App\Models\RegistroRecepcionDocumento;
 use App\Models\RegistroRecepcionDocumentoRespuesta;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ class RegistroRecepcionService
             ->with([
                 "creadoPor", "modificadoPor", "eliminadoPor",
                 "proyecto", "tipoDocumento", "tipoDocumentoClasificacion", "especialidad",
-                "documentosAdjuntos", "documentosRespuesta"
+                "documentosAdjuntos", "documentosRespuesta","responsablesDestino"
             ])
             ->when(!empty($search), fn($q) => $q->where(function ($query) use ($search) {
                 $query->where(DB::raw("LOWER(num_doc_recep)"), "LIKE", "%{$search}%")
@@ -75,6 +76,16 @@ class RegistroRecepcionService
             ]);
         }
 
+        //Guardar responsables de atención
+        if (!empty($data->get("responsables_destino"))) {
+            foreach ($data->get("responsables_destino", []) as $responsable) {
+                RegistroRecepcionDestino::query()->create([
+                    "registro_recepcion_id" => $registro->id,
+                    "responsable_id" => $responsable,
+                ]);
+            }
+        }
+
         return $registro;
     }
 
@@ -83,7 +94,7 @@ class RegistroRecepcionService
         return RegistroRecepcion::query()
             ->with([
                 "proyecto", "tipoDocumento", "tipoDocumentoClasificacion", "especialidad",
-                "documentosAdjuntos", "documentosRespuesta",
+                "documentosAdjuntos", "documentosRespuesta","responsablesDestino",
                 "creadoPor", "modificadoPor", "eliminadoPor"
             ])
             ->findOrFail($id);
@@ -114,6 +125,20 @@ class RegistroRecepcionService
                 "nombre_original" => basename($archivo),
             ]);
         }
+
+        // Actualizar responsables de atención
+        if (!empty($data->get("responsables_destino"))) {
+            // Eliminar los responsables actuales
+            RegistroRecepcionDestino::query()->where("registro_recepcion_id", $registro->id)->delete();
+            // Agregar los nuevos responsables
+            foreach ($data->get("responsables_destino", []) as $responsable) {
+                RegistroRecepcionDestino::query()->create([
+                    "registro_recepcion_id" => $registro->id,
+                    "responsable_id" => $responsable,
+                ]);
+            }
+        }
+
         return $registro;
     }
 
@@ -177,6 +202,22 @@ class RegistroRecepcionService
     {
         $registro = RegistroRecepcion::query()->findOrFail($documentoId);
         $registro->estado_documento = $estado;
+        $registro->update();
+        return $registro;
+    }
+
+    public function  modificarEstadoRespuestaPrioridad(int|string $documentoId, string $prioridad)
+    {
+        $registro = RegistroRecepcion::query()->findOrFail($documentoId);
+        $registro->prioridad = $prioridad;
+        $registro->update();
+        return $registro;
+    }
+
+    public function  modificarEstadoRespuestaSituacion(int|string $documentoId, string $situacion)
+    {
+        $registro = RegistroRecepcion::query()->findOrFail($documentoId);
+        $registro->situacion = $situacion;
         $registro->update();
         return $registro;
     }

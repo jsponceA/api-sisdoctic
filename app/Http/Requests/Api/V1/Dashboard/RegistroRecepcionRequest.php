@@ -22,18 +22,23 @@ class RegistroRecepcionRequest extends FormRequest
             "fecha_emision" => ["nullable"],
             "fecha_recepcion" => ["nullable"],
             "fecha_entrega_area" => ["nullable"],
-            "tipo_documento_id" => ["nullable", "exists:tipos_documento,id"],
+            "tipo_documento_id" => ["nullable",Rule::exists("tipos_documento", "id")],
             "num_doc_recep" => ["nullable", "string", "max:100"],
             "asunto" => ["nullable", "string", "max:500"],
-            "tipo_documento_clasificacion_id" => ["nullable", "exists:tipos_documento,id"],
-            "especialidad_id" => ["nullable", "exists:especialidades,id"],
-            "destino" => ["nullable", "string", "max:255"],
+            "tipo_documento_clasificacion_id" => ["nullable", Rule::exists("tipos_documento_clasificacion", "id")],
+            "especialidad_id" => ["nullable", Rule::exists("especialidades", "id")],
+            // RESPONSABLES DE DESTINO
+            "responsables_destino" => ["nullable", "array"],
+            "responsables_destino.*" => ["nullable", Rule::exists("responsables","id")],
+
 
             // DATOS DE RESPUESTA
             "fecha_respuesta" => ["nullable"],
             "num_docs_resp" => ["nullable", "string", "max:100"],
-            "atencion" => ["nullable", "string", "max:255"],
+            "tipo_documento_clasificacion_id_resp" => ["nullable", Rule::exists("tipos_documento_clasificacion", "id")],
+            "atencion" => ["nullable", "string", "max:150"],
             "acciones_observaciones" => ["nullable", "string"],
+
 
             // ESTADO DE RESPUESTA
             "prioridad" => ["nullable", "in:1,2,3"],
@@ -49,6 +54,8 @@ class RegistroRecepcionRequest extends FormRequest
             // DOCUMENTOS DE RESPUESTA
             "documentos_respuesta" => ["nullable", "array"],
             "documentos_respuesta.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
+
+
         ];
     }
 

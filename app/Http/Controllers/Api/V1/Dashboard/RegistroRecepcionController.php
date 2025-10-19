@@ -221,6 +221,40 @@ class RegistroRecepcionController extends Controller
     }
 
     /**
+     * Modificar la prioridad del estado respuesta
+     * @param Request $request
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function modificarEstadoRespuestaPrioridad(Request $request, int|string $id)
+    {
+        $request->validate([
+            "prioridad" => ["required", "in:1,2,3"]
+        ], [], [
+            "prioridad" => "estado del documento"
+        ]);
+        $this->registroRecepcionService->modificarEstadoRespuestaPrioridad($id,$request->input("prioridad"));
+        return response()->json(["message" => "Prioridad modificada"], ResponseHttpCode::HTTP_OK);
+    }
+
+    /**
+     * Modificar la situacion del estado respuesta
+     * @param Request $request
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function modificarEstadoRespuestaSituacion(Request $request, int|string $id)
+    {
+        $request->validate([
+            "situacion" => ["required", "string", "max:100"]
+        ], [], [
+            "situacion" => "estado del documento"
+        ]);
+        $this->registroRecepcionService->modificarEstadoRespuestaSituacion($id,$request->input("situacion"));
+        return response()->json(["message" => "Situacion modificada"], ResponseHttpCode::HTTP_OK);
+    }
+
+    /**
      * Reporte PDF de Listado de Registros de Recepción
      * @param Request $request
      * @return Response
