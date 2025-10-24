@@ -22,8 +22,8 @@ class ConfiguracionEmpresaRequest extends FormRequest
             "telefonos" => ["nullable","max:50"],
             "correo" => ["nullable","max:150"],
             "direccion" =>["nullable","max:255"],
-            "logo" => ["nullable",File::image(true)->extensions(["jpg","png","jpeg","svg"])->max("20mb")],
-            "favicon" => ["nullable",File::default()->extensions(["jpg","png","jpeg","svg","ico"])->max("20mb")],
+            "logo" => ["nullable",File::image(true)->extensions(["jpg","png","jpeg","svg"])->max("50mb")],
+            "favicon" => ["nullable",File::default()->extensions(["jpg","png","jpeg","svg","ico"])->max("50mb")],
         ];
     }
 

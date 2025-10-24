@@ -49,11 +49,11 @@ class RegistroRecepcionRequest extends FormRequest
 
             // DOCUMENTOS ADJUNTOS
             "documentos_adjuntos" => ["nullable", "array"],
-            "documentos_adjuntos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
+            "documentos_adjuntos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("50mb")],
 
             // DOCUMENTOS DE RESPUESTA
             "documentos_respuesta" => ["nullable", "array"],
-            "documentos_respuesta.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
+            "documentos_respuesta.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("50mb")],
 
 
         ];

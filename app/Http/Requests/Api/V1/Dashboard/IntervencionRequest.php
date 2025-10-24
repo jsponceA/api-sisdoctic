@@ -72,15 +72,15 @@ class IntervencionRequest extends FormRequest
 
             // Vistas generales (tabla relacionada)
             "vista_generales" => ["nullable", "array"],
-            "vista_generales.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+            "vista_generales.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("50mb")],
 
             // Vistas detalles (tabla relacionada)
             "vista_detalles" => ["nullable", "array"],
-            "vista_detalles.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+            "vista_detalles.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("50mb")],
 
             // Vistas intervenciones (tabla relacionada)
             "vista_intervenciones" => ["nullable", "array"],
-            "vista_intervenciones.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+            "vista_intervenciones.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("50mb")],
         ];
 
         return $commonRules;

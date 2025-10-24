@@ -22,7 +22,7 @@ class MiPerfilRequest extends FormRequest
             "nombres" => ["required","max:100"],
             "apellidos"  => ["required","max:100"],
             "correo" => ["nullable","max:150","email"],
-            "foto" => ["nullable","image",File::image()->extensions(["jpg","png","jpeg"])->max("10mb")],
+            "foto" => ["nullable","image",File::image()->extensions(["jpg","png","jpeg"])->max("50mb")],
         ];
     }
 

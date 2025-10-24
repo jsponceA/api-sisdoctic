@@ -38,11 +38,11 @@ class ProyectoRequest extends FormRequest
 
                     // DOCUMENTOS
                     "documentos" => ["nullable", "array"],
-                    "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
+                    "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("50mb")],
 
                     // FOTOGRAFÍAS
                     "fotografias" => ["nullable", "array"],
-                    "fotografias.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+                    "fotografias.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("50mb")],
                 ];
             case "PUT":
                 return [
@@ -65,11 +65,11 @@ class ProyectoRequest extends FormRequest
 
                     // DOCUMENTOS
                     "documentos" => ["nullable", "array"],
-                    "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("20mb")],
+                    "documentos.*" => ["nullable", File::types(["pdf", "doc", "docx", "xls", "xlsx"])->max("50mb")],
 
                     // FOTOGRAFÍAS
                     "fotografias" => ["nullable", "array"],
-                    "fotografias.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("20mb")],
+                    "fotografias.*" => ["nullable", File::image()->extensions(["jpg", "jpeg", "png"])->max("50mb")],
                 ];
             default:
                 return [];

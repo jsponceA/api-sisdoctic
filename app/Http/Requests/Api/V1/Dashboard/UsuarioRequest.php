@@ -25,7 +25,7 @@ class UsuarioRequest extends FormRequest
                     "nombres" => ["required","max:150"],
                     "apellidos"  => ["required","max:150"],
                     "correo" => ["nullable","max:150","email"],
-                    "foto" => ["nullable",File::image(true)->extensions(["jpg","png","jpeg","svg"])->max("10mb")],
+                    "foto" => ["nullable",File::image(true)->extensions(["jpg","png","jpeg","svg"])->max("50mb")],
                     "estado" => ["nullable","in:1,0,true,false"]
                 ];
             case "PUT":
@@ -36,7 +36,7 @@ class UsuarioRequest extends FormRequest
                     "nombres" => ["required","max:150"],
                     "apellidos"  => ["required","max:150"],
                     "correo" => ["nullable","max:150","email"],
-                    "foto" => ["nullable",File::image(true)->extensions(["jpg","png","jpeg","svg"])->max("10mb")],
+                    "foto" => ["nullable",File::image(true)->extensions(["jpg","png","jpeg","svg"])->max("50mb")],
                     "estado" => ["nullable","in:1,0,true,false"]
                 ];
             default:
