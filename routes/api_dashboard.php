@@ -124,11 +124,13 @@ Route::group(["prefix" => "v1/dashboard","as" => "api.v1.dashboard."], function 
             Route::get("recepciones/por-especialidad", [EstadisticaController::class, "recepcionesPorEspecialidad"]);
             Route::get("recepciones/por-estado", [EstadisticaController::class, "recepcionesPorEstado"]);
             Route::get("recepciones/por-prioridad", [EstadisticaController::class, "recepcionesPorPrioridad"]);
+            Route::get("recepciones/conteo-estado-documento", [EstadisticaController::class, "conteoPorEstadoDocumento"]);
 
             // KPIs de Recepciones - Métricas de rendimiento
             Route::get("recepciones/tiempo-promedio-respuesta", [EstadisticaController::class, "tiempoPromedioRespuesta"]);
             Route::get("recepciones/con-retraso", [EstadisticaController::class, "recepcionesConRetraso"]);
             Route::get("recepciones/tendencia-mensual", [EstadisticaController::class, "tendenciaMensualRecepciones"]);
+            Route::get("recepciones/penalizadas", [EstadisticaController::class, "recepcionesPenalizadas"]);
         });
 
         /* RUTAS MODULO PROYECTOS*/

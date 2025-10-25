@@ -506,4 +506,146 @@ class EstadisticaController extends Controller
             'data' => $data
         ]);
     }
+
+    /**
+     * KPI - Conteo de Recepciones por Estado de Documento
+     */
+    public function conteoPorEstadoDocumento(Request $request)
+    {
+        $estados = [
+            'aprobado' => 'Aprobado',
+            'observado' => 'Observado (No Aprobado)',
+            'en_proceso' => 'En Proceso',
+        ];
+
+        $counts = RegistroRecepcion::whereNull('deleted_at')
+            ->whereIn('estado_documento', array_keys($estados))
+            ->select('estado_documento', DB::raw('COUNT(*) as total'))
+            ->groupBy('estado_documento')
+            ->pluck('total', 'estado_documento')
+            ->toArray();
+
+        $result = [];
+        foreach ($estados as $key => $label) {
+            $result[] = [
+                'value' => $key,
+                'label' => $label,
+                'total' => isset($counts[$key]) ? (int) $counts[$key] : 0,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
+
+    /**
+     * KPI - Recepciones Penalizadas (Con Penalidad por Retraso)
+     */
+    public function recepcionesPenalizadas(Request $request)
+    {
+        $fechaInicio = $request->get('fecha_inicio');
+        $fechaFin = $request->get('fecha_fin');
+        $limit = $request->get('limit', 20);
+
+        // Obtener recepciones sin responder con fecha de entrega al área
+        $query = RegistroRecepcion::with([
+            'proyecto.tiposDocumento',
+            'tipoDocumento',
+            'especialidad',
+        ])
+        ->whereNull('deleted_at')
+        ->where('situacion', 'SR') // Sin responder
+        ->whereNotNull('fecha_entrega_area');
+
+        if ($fechaInicio) {
+            $query->where('fecha_recepcion', '>=', $fechaInicio);
+        }
+        if ($fechaFin) {
+            $query->where('fecha_recepcion', '<=', $fechaFin);
+        }
+
+        $recepciones = $query->get();
+
+        // Calcular penalidades para cada recepción
+        $recepcionesPenalizadas = [];
+        $totalPenalidad = 0;
+
+        foreach ($recepciones as $recepcion) {
+            // Obtener días de plazo y penalidad del proyecto
+            $tipoDocProyecto = null;
+            if ($recepcion->proyecto && $recepcion->tipo_documento_id) {
+                $tipoDocProyecto = $recepcion->proyecto->tiposDocumento
+                    ->firstWhere('tipo_documento_id', $recepcion->tipo_documento_id);
+            }
+
+            if (!$tipoDocProyecto) {
+                continue; // Si no hay configuración, no se puede calcular penalidad
+            }
+
+            $diasPlazo = $tipoDocProyecto->dias_plazo;
+            $penalidad = $tipoDocProyecto->penalidad;
+
+            if (!$diasPlazo || !$penalidad) {
+                continue;
+            }
+
+            // Calcular días sin responder
+            $fechaEntrega = \Carbon\Carbon::parse($recepcion->fecha_entrega_area);
+            $hoy = now();
+            $diasSinResponder = abs((int) $fechaEntrega->diffInDays($hoy, false));
+
+            // Calcular fecha límite para responder
+            $fechaLimite = $fechaEntrega->copy()->addDays($diasPlazo);
+
+            // Calcular días defasados (excedidos)
+            $diasDefasados = 0;
+            if ($hoy->isAfter($fechaLimite)) {
+                $diasDefasados = abs((int) $fechaLimite->diffInDays($hoy, false));
+            }
+
+            // Solo incluir si hay días defasados (retraso)
+            if ($diasDefasados > 0) {
+                $penalidad_total = $diasDefasados * $penalidad;
+                $totalPenalidad += $penalidad_total;
+
+                $recepcionesPenalizadas[] = [
+                    'id' => $recepcion->id,
+                    'proyecto_codigo' => $recepcion->proyecto?->codigo_proyecto,
+                    'proyecto_nombre' => $recepcion->proyecto?->nombre,
+                    'num_doc_recep' => $recepcion->num_doc_recep,
+                    'asunto' => $recepcion->asunto,
+                    'tipo_documento' => $recepcion->tipoDocumento?->nombre,
+                    'especialidad' => $recepcion->especialidad?->nombre,
+                    'fecha_entrega_area' => $recepcion->fecha_entrega_area,
+                    'fecha_entrega_area_format' => $recepcion->fecha_entrega_area_format,
+                    'dias_plazo' => $diasPlazo,
+                    'fecha_limite' => $fechaLimite->format('Y-m-d'),
+                    'fecha_limite_format' => $fechaLimite->format('d/m/Y'),
+                    'dias_sin_responder' => $diasSinResponder,
+                    'dias_defasados' => $diasDefasados,
+                    'penalidad_por_dia' => $penalidad,
+                    'penalidad_total' => round($penalidad_total, 2),
+                ];
+            }
+        }
+
+        // Ordenar por penalidad total descendente
+        usort($recepcionesPenalizadas, function($a, $b) {
+            return $b['penalidad_total'] <=> $a['penalidad_total'];
+        });
+
+        // Limitar resultados
+        $recepcionesPenalizadas = array_slice($recepcionesPenalizadas, 0, $limit);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_recepciones_penalizadas' => count($recepcionesPenalizadas),
+                'penalidad_total_acumulada' => round($totalPenalidad, 2),
+                'recepciones' => $recepcionesPenalizadas,
+            ]
+        ]);
+    }
 }
