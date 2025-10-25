@@ -95,11 +95,11 @@
 
 @php
     // Función para calcular días sin responder
-    $calcularDiasSinResponder = function($fechaEntregaArea) {
+    $calcularDiasSinResponder = function($fechaEntregaArea, $fechaRespuesta = null) {
         if (!$fechaEntregaArea) return '-';
-        $hoy = now();
+        $fechaFinal = $fechaRespuesta ? \Carbon\Carbon::parse($fechaRespuesta) : now();
         $fechaEntrega = \Carbon\Carbon::parse($fechaEntregaArea);
-        return abs((int) $fechaEntrega->diffInDays($hoy, false));
+        return abs((int) $fechaEntrega->diffInDays($fechaFinal, false));
     };
 
     // Función para calcular fecha para responder
@@ -110,12 +110,12 @@
     };
 
     // Función para calcular días defasados
-    $calcularDiasDefasados = function($fechaParaResponder) {
+    $calcularDiasDefasados = function($fechaParaResponder, $fechaRespuesta = null) {
         if (!$fechaParaResponder || $fechaParaResponder === '-') return '-';
-        $hoy = now();
+        $fechaFinal = $fechaRespuesta ? \Carbon\Carbon::parse($fechaRespuesta) : now();
         $fechaLimite = is_string($fechaParaResponder) ? \Carbon\Carbon::parse($fechaParaResponder) : $fechaParaResponder;
-        if ($hoy->isAfter($fechaLimite)) {
-            return abs((int) $fechaLimite->diffInDays($hoy, false));
+        if ($fechaFinal->isAfter($fechaLimite)) {
+            return abs((int) $fechaLimite->diffInDays($fechaFinal, false));
         }
         return 0;
     };
@@ -130,9 +130,9 @@
     }
 
     // Calcular valores
-    $diasSinResponder = $calcularDiasSinResponder($registro->fecha_entrega_area);
+    $diasSinResponder = $calcularDiasSinResponder($registro->fecha_entrega_area, $registro->fecha_respuesta);
     $fechaParaResponder = $calcularFechaParaResponder($registro->fecha_entrega_area, $diasPlazo);
-    $diasDefasados = $calcularDiasDefasados($fechaParaResponder);
+    $diasDefasados = $calcularDiasDefasados($fechaParaResponder, $registro->fecha_respuesta);
 @endphp
 
 <div class="titulo-principal">FICHA DE REGISTRO DE RECEPCIÓN</div>

@@ -593,16 +593,19 @@ class EstadisticaController extends Controller
 
             // Calcular días sin responder
             $fechaEntrega = \Carbon\Carbon::parse($recepcion->fecha_entrega_area);
-            $hoy = now();
-            $diasSinResponder = abs((int) $fechaEntrega->diffInDays($hoy, false));
+            // Si existe fecha_respuesta, usar esa fecha; si no, usar hoy
+            $fechaFinal = $recepcion->fecha_respuesta
+                ? \Carbon\Carbon::parse($recepcion->fecha_respuesta)
+                : now();
+            $diasSinResponder = abs((int) $fechaEntrega->diffInDays($fechaFinal, false));
 
             // Calcular fecha límite para responder
             $fechaLimite = $fechaEntrega->copy()->addDays($diasPlazo);
 
             // Calcular días defasados (excedidos)
             $diasDefasados = 0;
-            if ($hoy->isAfter($fechaLimite)) {
-                $diasDefasados = abs((int) $fechaLimite->diffInDays($hoy, false));
+            if ($fechaFinal->isAfter($fechaLimite)) {
+                $diasDefasados = abs((int) $fechaLimite->diffInDays($fechaFinal, false));
             }
 
             // Solo incluir si hay días defasados (retraso)

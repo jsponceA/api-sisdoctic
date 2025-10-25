@@ -7,11 +7,11 @@
 
 @php
     // Funciones de cálculo (igual que en ficha_recepcion)
-    $calcularDiasSinResponder = function($fechaEntregaArea) {
+    $calcularDiasSinResponder = function($fechaEntregaArea, $fechaRespuesta = null) {
         if (!$fechaEntregaArea) return '-';
-        $hoy = now();
+        $fechaFinal = $fechaRespuesta ? \Carbon\Carbon::parse($fechaRespuesta) : now();
         $fechaEntrega = \Carbon\Carbon::parse($fechaEntregaArea);
-        return abs((int) $fechaEntrega->diffInDays($hoy, false));
+        return abs((int) $fechaEntrega->diffInDays($fechaFinal, false));
     };
 
     $calcularFechaParaResponder = function($fechaEntregaArea, $diasPlazo) {
@@ -20,12 +20,12 @@
         return $fechaEntrega->copy()->addDays($diasPlazo);
     };
 
-    $calcularDiasDefasados = function($fechaParaResponder) {
+    $calcularDiasDefasados = function($fechaParaResponder, $fechaRespuesta = null) {
         if (!$fechaParaResponder || $fechaParaResponder === '-') return '-';
-        $hoy = now();
+        $fechaFinal = $fechaRespuesta ? \Carbon\Carbon::parse($fechaRespuesta) : now();
         $fechaLimite = is_string($fechaParaResponder) ? \Carbon\Carbon::parse($fechaParaResponder) : $fechaParaResponder;
-        if ($hoy->isAfter($fechaLimite)) {
-            return abs((int) $fechaLimite->diffInDays($hoy, false));
+        if ($fechaFinal->isAfter($fechaLimite)) {
+            return abs((int) $fechaLimite->diffInDays($fechaFinal, false));
         }
         return 0;
     };
@@ -86,9 +86,9 @@
             }
 
             // Calcular valores
-            $diasSinResponder = $calcularDiasSinResponder($r->fecha_entrega_area);
+            $diasSinResponder = $calcularDiasSinResponder($r->fecha_entrega_area, $r->fecha_respuesta);
             $fechaParaResponder = $calcularFechaParaResponder($r->fecha_entrega_area, $diasPlazo);
-            $diasDefasados = $calcularDiasDefasados($fechaParaResponder);
+            $diasDefasados = $calcularDiasDefasados($fechaParaResponder, $r->fecha_respuesta);
 
             // Formatear mes
             $mes = $r->fecha_recepcion ? \Carbon\Carbon::parse($r->fecha_recepcion)->locale('es')->isoFormat('MMMM - dddd') : '-';
