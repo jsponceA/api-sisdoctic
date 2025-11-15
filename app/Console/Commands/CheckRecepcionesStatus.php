@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\AlertRecepcionStatus;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 class CheckRecepcionesStatus extends Command
 {
@@ -26,7 +28,7 @@ class CheckRecepcionesStatus extends Command
     public function handle()
     {
         $this->info('Iniciando verificación de documentos pendientes...');
-
+        Mail::to(["lbellodas@gmail.com","dponce@dezain.com.pe"])->send(new AlertRecepcionStatus());
         // Lógica para verificar el estado de las recepciones
     }
 }
